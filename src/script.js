@@ -1,16 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
     const paperSizeSelect = document.getElementById('paperSize');
     const canvas = document.getElementById('canvas');
-    const addImageButton = document.getElementById('addImage');
+    //const addImageButton = document.getElementById('addImage'); //for browsing local file
+    const addImageURLButton = document.getElementById('addImageURL');
     const addTextButton = document.getElementById('addText');
     const exportConfigButton = document.getElementById('exportConfig');
     const importConfigButton = document.getElementById('importConfig');
     const importFileInput = document.getElementById('importFile');
     const createPDFButton = document.getElementById('createPDF');
-    const importTemplate = document.getElementById("addTemplate")
+    const importTemplate = document.getElementById("addTemplate");
+    //const imageUrLInput = document.getElementById("imageUrlInput");
 
     paperSizeSelect.addEventListener('change', updateCanvasSize);
-    addImageButton.addEventListener('click', addImage);
+    //addImageButton.addEventListener('click', addImage);
+    addImageURLButton.addEventListener('click', addImageURL);
     addTextButton.addEventListener('click', addText);
     exportConfigButton.addEventListener('click', exportConfig);
     importConfigButton.addEventListener('click', () => importFileInput.click());
@@ -70,36 +73,69 @@ document.addEventListener('DOMContentLoaded', () => {
         input.click();
     }    
 
-    function addImage() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.addEventListener('change', function (event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const imgContainer = document.createElement('div');
-                    imgContainer.classList.add('image-container');
-                    imgContainer.style.position = 'absolute';
-                    imgContainer.style.left = '50px';
-                    imgContainer.style.top = '50px';
+    // For Browsing local file
+    // function addImage() {
+    //     const input = document.createElement('input');
+    //     input.type = 'file';
+    //     input.accept = 'image/*';
+    //     input.addEventListener('change', function (event) {
+    //         const file = event.target.files[0];
+    //         if (file) {
+    //             const reader = new FileReader();
+    //             reader.onload = function (e) {
+    //                 const imgContainer = document.createElement('div');
+    //                 imgContainer.classList.add('image-container');
+    //                 imgContainer.style.position = 'absolute';
+    //                 imgContainer.style.left = '50px';
+    //                 imgContainer.style.top = '50px';
     
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.style.width = '150px';
-                    img.style.height = '150px';
-                    img.style.display = 'block';
+    //                 const img = document.createElement('img');
+    //                 img.src = e.target.result;
+    //                 img.style.width = '150px';
+    //                 img.style.height = '150px';
+    //                 img.style.display = 'block';
     
-                    imgContainer.appendChild(img);
-                    createResizeHandles(imgContainer, img);
-                    makeDraggable(imgContainer);
-                    canvas.appendChild(imgContainer);
-                };
-                reader.readAsDataURL(file);
-            }
-        });
-        input.click();
+    //                 imgContainer.appendChild(img);
+    //                 createResizeHandles(imgContainer, img);
+    //                 makeDraggable(imgContainer);
+    //                 canvas.appendChild(imgContainer);
+    //             };
+    //             reader.readAsDataURL(file);
+    //         }
+    //     });
+    //     input.click();
+    // }
+
+    function addImageURL() {
+        const imageURL = imageUrlInput.value;
+        const imagePattern = /\.(jpg|jpeg|png|gif|bmp)$/i; // Regex to check image extensions
+    
+        if (imageURL && imagePattern.test(imageURL)) {
+            const imgContainer = document.createElement('div');
+            imgContainer.classList.add('image-container');
+            imgContainer.style.position = 'absolute';
+            imgContainer.style.left = '50px';
+            imgContainer.style.top = '50px';
+    
+            const img = document.createElement('img');
+            img.src = imageURL;
+            img.style.width = '150px';
+            img.style.height = '150px';
+            img.style.display = 'block';
+    
+            img.onload = function () {
+                imgContainer.appendChild(img);
+                createResizeHandles(imgContainer, img);
+                makeDraggable(imgContainer);
+                canvas.appendChild(imgContainer);
+            };
+    
+            img.onerror = function () {
+                alert('Failed to load image. Please check the URL.');
+            };
+        } else {
+            alert('Please enter a valid image URL.');
+        }
     }
     
     function createResizeHandles(container, img) {
