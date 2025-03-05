@@ -239,8 +239,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const canvas = document.getElementById("canvas");
       const rect = canvas.getBoundingClientRect();
   
-      const mouseX = event.clientX - rect.left;
-      const mouseY = event.clientY - rect.top;
+      //const mouseX = event.clientX - rect.left; //can use both
+      //const mouseY = event.clientY - rect.top;
+      const mouseX = event.offsetX;
+      const mouseY = event.offsetY;
   
       console.log(`Mouse clicked at: X: ${mouseX}, Y: ${mouseY}`);
       clickPosition = { x: mouseX, y: mouseY };
@@ -263,23 +265,34 @@ document.addEventListener("DOMContentLoaded", () => {
     textbox.classList.add("textbox");
     textbox.contentEditable = true;
     textbox.textContent = textContent;
-    // Style the textbox: position it at the click position
-    textbox.style.position = "absolute"; // Make sure it's positioned absolutely within the canvas
+
+    textbox.style.position = "absolute"; 
     textbox.style.left = `${x}px`;
     textbox.style.top = `${y}px`;
     textbox.style.width= "100px";
     textbox.style.height= "50px";
-    // Add the textbox to the canvas
+    
     canvas.appendChild(textbox);
     makeDraggable(textbox);
     makeRemovable(textbox);
+    makeResizable(textbox);
   }
 
   function makeDraggable(element) {
     $(element).draggable({
       containment: "#canvas",
+      cursor: "move",
+      cursorAt: {top: 25,left:50}
     });
   }
+
+  function makeResizable(element) {
+    $(element).resizable({
+      containment: "#canvas",
+
+    });
+    console.log("Pprem")
+}
 
   function makeRemovable(element) {
     element.addEventListener("dblclick", () => {
