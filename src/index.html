@@ -1,34 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PDF Creator</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <div class="toolbar">
-        <label for="paperSize">Paper Size:</label>
-        <select id="paperSize">
-            <option value="A4">A4</option>
-            <option value="A3">A3</option>
-            <option value="custom">Custom</option>
-        </select>
-        <!--<button id="addImage">Add Image</button>-->
-        <input type="text" id="imageUrlInput" placeholder="Enter image URL" />
-        <button id="addImageURL">Add Image</button>
-        <button id="addText">Add Text</button>
-        <button id="startDraw">Add Text</button>
-        <button id="addTemplate">Import Template</button>
-        <button id="exportConfig">Export Config</button>
-        <button id="importConfig">Import Config</button>
-        <input type="file" id="importFile" style="display:none">
-        <button id="createPDF">Create PDF</button>
+      <label for="paperSize">Paper Size:</label>
+      <select id="paperSize">
+        <option value="A4">A4</option>
+        <option value="A3">A3</option>
+        <option value="custom">Custom</option>
+      </select>
+      <!--<button id="addImage">Add Image</button>-->
+      <input type="text" id="imageUrlInput" placeholder="Enter image URL" />
+      <button id="addImageURL">Add Image</button>
+      <button id="addText">Add Text</button>
+      <button id="startDraw">Add Text</button>
+      <button id="addTemplate">Import Template</button>
+      <button id="exportConfig">Export Config</button>
+      <button id="importConfig">Import Config</button>
+      <input type="file" id="importFile" style="display: none" />
+      <button id="createPDF">Create PDF</button>
     </div>
     <div id="canvasContainer">
-        <div id="canvas"></div>
+      <div id="canvas"></div>
     </div>
+    <div id="canvas"></div>
+
+    <div id="textboxProperties">
+        <h3>Textbox Properties</h3>
+        <label>Font Size: <input id="fontSize" type="number" value="16"></label>
+        <br>
+        <br>
+        <label>Content: <input id="textContent" type="text"></label>
+        <br>
+        <br>
+        <label>Position X: <input id="posX" type="number"></label>
+        <br>
+        <br>
+        <label>Position Y: <input id="posY" type="number"></label>
+        <br>
+        <br>
+        <p>Type: <span id="type">Textbox</span></p>
+      </div>
+      
+
     <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-</body>
+  </body>
 </html>

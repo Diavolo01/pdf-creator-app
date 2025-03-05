@@ -283,8 +283,17 @@ document.addEventListener("DOMContentLoaded", () => {
     canvas.appendChild(textbox);
     makeDraggable(textbox);
     makeRemovable(textbox);
+    updateTextboxProperties(textbox);
   }
   canvas.addEventListener("click", handleCanvasClick);
+
+  function updateTextboxProperties(textbox) {
+    document.getElementById("fontSize").textContent = textbox.style.fontSize || "16px";
+    document.getElementById("textContent").textContent = textbox.textContent;
+    document.getElementById("mouseX").textContent = textbox.offsetLeft;
+    document.getElementById("mouseY").textContent = textbox.offsetTop;
+    document.getElementById("type").textContent = "Textbox";
+  }
 
   function makeDraggable(element) {
     element.draggable = true;
@@ -314,30 +323,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function exportConfig() {
-    const items = Array.from(canvas.children).map((item) => ({
-      type: item.tagName.toLowerCase(),
-      src: item.tagName.toLowerCase() === "img" ? item.src : undefined,
-      text: item.tagName.toLowerCase() === "div" ? item.textContent : undefined,
-      x: item.offsetLeft,
-      y: item.offsetTop,
-      width: item.offsetWidth,
-      height: item.offsetHeight,
-      zIndex: item.style.zIndex || "auto",
-    }));
-    const config = {
-      paperSize: paperSizeSelect.value,
-      items,
-    };
-    const blob = new Blob([JSON.stringify(config, null, 2)], {
-      type: "application/json",
+    const items = Array.from(canvas.children).map((item) => {
+      return {
+        type: item.tagName.toLowerCase(),
+        src: item.tagName.toLowerCase() === "img" ? item.src : undefined,
+        text: item.tagName.toLowerCase() === "div" ? item.textContent : undefined,
+        x: item.offsetLeft,
+        y: item.offsetTop,
+        width: item.offsetWidth,
+        height: item.offsetHeight,
+        zIndex: item.style.zIndex || "auto",
+        fontSize: item.style.fontSize || "16px",
+        fontColor: item.style.color || "#000000",
+        textAlign: item.style.textAlign || "left"
+      };
     });
+  
+    const config = { paperSize: paperSizeSelect.value, items };
+    const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = "config.json";
     a.click();
   }
-
+  
   function importConfig(event) {
     const file = event.target.files[0];
     if (file) {
