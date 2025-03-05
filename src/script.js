@@ -204,25 +204,25 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function addText() {
-    if (isDrawing) return;
-    isDrawing = true;
+  // function addText() {
+  //   if (isDrawing) return;
+  //   isDrawing = true;
 
-    const text = prompt("Enter text:");
-    if (text) {
-      const div = document.createElement("div");
-      div.textContent = text;
-      div.classList.add("item", "text-item");
-      div.style.width = "100px";
-      div.style.height = "50px";
-      makeDraggable(div);
-      makeRemovable(div);
-      canvas.appendChild(div);
-      isDrawing = false;
-    } else {
-      isDrawing = false;
-    }
-  }
+  //   const text = prompt("Enter text:");
+  //   if (text) {
+  //     const div = document.createElement("div");
+  //     div.textContent = text;
+  //     div.classList.add("item", "text-item");
+  //     div.style.width = "100px";
+  //     div.style.height = "50px";
+  //     makeDraggable(div);
+  //     makeRemovable(div);
+  //     canvas.appendChild(div);
+  //     isDrawing = false;
+  //   } else {
+  //     isDrawing = false;
+  //   }
+  // }
 
   let clickPosition = null;
 
@@ -276,29 +276,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function makeDraggable(element) {
-    element.draggable = true;
-    element.addEventListener("dragstart", (e) => {
-      e.dataTransfer.setData("text/plain", "");
+    $(element).draggable({
+      containment: "#canvas",
     });
+  }
 
-    element.addEventListener("drag", (e) => {
-      if (e.clientX > 0 && e.clientY > 0) {
-        let newX = e.clientX - canvas.offsetLeft - element.offsetWidth / 2;
-        let newY = e.clientY - canvas.offsetTop - element.offsetHeight / 2;
-
-        // Ensure it stays within the canvas boundaries
-        newX = Math.max(
-          0,
-          Math.min(newX, canvas.offsetWidth - element.offsetWidth)
-        );
-        newY = Math.max(
-          0,
-          Math.min(newY, canvas.offsetHeight - element.offsetHeight)
-        );
-
-        element.style.left = `${newX}px`;
-        element.style.top = `${newY}px`;
-      }
+  function makeRemovable(element) {
+    element.addEventListener("dblclick", () => {
+      element.remove();
     });
   }
 
@@ -358,15 +343,6 @@ document.addEventListener("DOMContentLoaded", () => {
       };
       reader.readAsText(file);
     }
-  }
-
-  function makeRemovable(element) {
-    element.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-      if (confirm("Do you want to remove this item?")) {
-        element.remove();
-      }
-    });
   }
 
   function createPDF() {
