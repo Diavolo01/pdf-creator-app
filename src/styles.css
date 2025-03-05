@@ -1,27 +1,36 @@
+body, html {
+    height: 100%;
+    margin: 0;
+}
+
 body {
     display: flex;
     flex-direction: column;
-    align-items: left;
+    align-items: center;
     font-family: Arial, sans-serif;
 }
 
 .toolbar {
     margin: 20px;
+    margin-right: 400px;
 }
 
 #canvasContainer {
     width: 100%;
-    height: 100%;
+    height: 80vh; /* Make sure it takes up enough space */
     display: flex;
-    justify-content: left;
-    align-items: center;
-    margin-left: 150px;
+    align-items: flex-start; /* Align to top to avoid centering issues */
+    justify-content: center;
+    margin-right: 350px;
 }
 
 #canvas {
+    width: 210mm; /* A4 width */
+    height: 297mm; /* A4 height */
     border: 1px solid #000;
     position: relative;
     overflow: hidden;
+    margin: 0;
 }
 
 .item {
@@ -43,6 +52,7 @@ body {
     height: 100%;
     z-index: -1;
 }
+
 .resizable {
     position: absolute;
     resize: both;
@@ -73,4 +83,4 @@ body {
     top: 0;
     bottom: 0;
     overflow-y: auto;
-  }
+}

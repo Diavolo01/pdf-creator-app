@@ -17,7 +17,7 @@
       <!--<button id="addImage">Add Image</button>-->
       <input type="text" id="imageUrlInput" placeholder="Enter image URL" />
       <button id="addImageURL">Add Image</button>
-      <button id="addText">Add Text</button>
+  
       <button id="startDraw">Add Text</button>
       <button id="addTemplate">Import Template</button>
       <button id="exportConfig">Export Config</button>
@@ -28,7 +28,6 @@
     <div id="canvasContainer">
       <div id="canvas"></div>
     </div>
-    <div id="canvas"></div>
 
     <div id="textboxProperties">
         <h3>Textbox Properties</h3>
@@ -47,7 +46,13 @@
         <p>Type: <span id="type">Textbox</span></p>
       </div>
       
-
+<script src="https://code.jquery.com/jquery-3.7.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
+  <script>
+  $( function() {
+    $( "#draggable" ).draggable();
+  } );
+  </script>
     <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   </body>

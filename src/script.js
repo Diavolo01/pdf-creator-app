@@ -3,7 +3,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("canvas");
   //const addImageButton = document.getElementById('addImage'); //for browsing local file
   const addImageURLButton = document.getElementById("addImageURL");
-  const addTextButton = document.getElementById("addText");
   const exportConfigButton = document.getElementById("exportConfig");
   const importConfigButton = document.getElementById("importConfig");
   const importFileInput = document.getElementById("importFile");
@@ -16,13 +15,13 @@ document.addEventListener("DOMContentLoaded", () => {
   paperSizeSelect.addEventListener("change", updateCanvasSize);
   //addImageButton.addEventListener('click', addImage);
   addImageURLButton.addEventListener("click", addImageURL);
-  addTextButton.addEventListener("click", addText);
   exportConfigButton.addEventListener("click", exportConfig);
   importConfigButton.addEventListener("click", () => importFileInput.click());
   importFileInput.addEventListener("change", importConfig);
   createPDFButton.addEventListener("click", createPDF);
   importTemplate.addEventListener("click", addTemplate);
   startDraw.addEventListener("click", startDrawing);
+  canvas.addEventListener("click", handleCanvasClick);
   function updateCanvasSize() {
     const size = paperSizeSelect.value;
     switch (size) {
@@ -236,33 +235,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Function to handle click inside the canvas and store the position
   function handleCanvasClick(event) {
-    if (isDrawing) {
-      // Get the canvas element
+    if (!isDrawing) return; 
       const canvas = document.getElementById("canvas");
-      const rect = canvas.getBoundingClientRect(); // Get the canvas position relative to viewport
-
-      // Calculate the mouse position relative to the canvas
+      const rect = canvas.getBoundingClientRect();
+  
       const mouseX = event.clientX - rect.left;
       const mouseY = event.clientY - rect.top;
-
-      // Log the mouse position to the console
+  
       console.log(`Mouse clicked at: X: ${mouseX}, Y: ${mouseY}`);
-
-      // Save the click position
       clickPosition = { x: mouseX, y: mouseY };
-
-      // Ask the user for the content of the text
+  
       const textContent = prompt("Enter the content for the textbox:");
-
+  
       if (textContent) {
-        // Create the textbox at the saved position with the provided content
         createTextbox(clickPosition.x, clickPosition.y, textContent);
       }
-
-      // Turn off drawing mode after creating the textbox
-      isDrawing = false;
-    }
+      isDrawing = false;   
   }
+  
 
   // Function to create a textbox at the specified position
   function createTextbox(x, y, textContent) {
@@ -273,26 +263,16 @@ document.addEventListener("DOMContentLoaded", () => {
     textbox.classList.add("textbox");
     textbox.contentEditable = true;
     textbox.textContent = textContent;
-
     // Style the textbox: position it at the click position
     textbox.style.position = "absolute"; // Make sure it's positioned absolutely within the canvas
     textbox.style.left = `${x}px`;
     textbox.style.top = `${y}px`;
-
+    textbox.style.width= "100px";
+    textbox.style.height= "50px";
     // Add the textbox to the canvas
     canvas.appendChild(textbox);
     makeDraggable(textbox);
     makeRemovable(textbox);
-    updateTextboxProperties(textbox);
-  }
-  canvas.addEventListener("click", handleCanvasClick);
-
-  function updateTextboxProperties(textbox) {
-    document.getElementById("fontSize").textContent = textbox.style.fontSize || "16px";
-    document.getElementById("textContent").textContent = textbox.textContent;
-    document.getElementById("mouseX").textContent = textbox.offsetLeft;
-    document.getElementById("mouseY").textContent = textbox.offsetTop;
-    document.getElementById("type").textContent = "Textbox";
   }
 
   function makeDraggable(element) {
