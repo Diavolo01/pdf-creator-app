@@ -329,34 +329,45 @@ document.addEventListener("DOMContentLoaded", () => {
   function importConfig(event) {
     const file = event.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const config = JSON.parse(e.target.result);
-        paperSizeSelect.value = config.paperSize;
-        updateCanvasSize();
-        canvas.innerHTML = "";
-        config.items.forEach((item) => {
-          let element;
-          if (item.type === "img") {
-            element = document.createElement("img");
-            element.src = item.src;
-          } else if (item.type === "div") {
-            element = document.createElement("div");
-            element.textContent = item.text;
-            element.classList.add("text-item");
-          }
-          element.classList.add("item");
-          element.style.left = `${item.x}px`;
-          element.style.top = `${item.y}px`;
-          element.style.width = `${item.width}px`;
-          element.style.height = `${item.height}px`;
-          makeDraggable(element);
-          canvas.appendChild(element);
-        });
-      };
-      reader.readAsText(file);
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const config = JSON.parse(e.target.result);
+            paperSizeSelect.value = config.paperSize;
+            updateCanvasSize();
+            canvas.innerHTML = "";
+
+            config.items.forEach((item) => {
+                let element;
+                if (item.type === "img") {
+                    element = document.createElement("img");
+                    element.src = item.src;
+                } else if (item.type === "div") {
+                    element = document.createElement("div");
+                    element.textContent = item.text;
+                    element.classList.add("text-item");
+                    element.contentEditable = true;  // Ensure text is editable
+                    element.style.fontSize = item.fontSize || "16px";
+                    element.style.color = item.fontColor || "#000000";
+                    element.style.textAlign = item.textAlign || "left";
+                }
+                element.classList.add("item");
+                element.style.position = "absolute";  // Ensure correct positioning
+                element.style.left = `${item.x}px`;
+                element.style.top = `${item.y}px`;
+                element.style.width = `${item.width}px`;
+                element.style.height = `${item.height}px`;
+
+                makeDraggable(element);
+                makeResizable(element);
+                makeRemovable(element);
+
+                canvas.appendChild(element);
+            });
+        };
+        reader.readAsText(file);
     }
-  }
+}
+
 
   function createPDF() {
     const { jsPDF } = window.jspdf;
