@@ -70,7 +70,9 @@ document.addEventListener("DOMContentLoaded", () => {
   function addImageUrl() {
     if (isDrawing) return;
     isDrawing = true;
-    const imageUrl = document.getElementById("imageUrlInput")?.value || prompt("Enter image URL:");
+    const imageUrl =
+      document.getElementById("imageUrlInput")?.value ||
+      prompt("Enter image URL:");
     const imagePattern = /\.(jpg|jpeg|png|gif|bmp)$/i;
 
     if (imageUrl && imagePattern.test(imageUrl)) {
@@ -132,13 +134,19 @@ document.addEventListener("DOMContentLoaded", () => {
           let newHeight = startHeight;
 
           if (corner.includes("right")) {
-            newWidth = Math.min(startWidth + diffX, canvas.offsetWidth - container.offsetLeft);
+            newWidth = Math.min(
+              startWidth + diffX,
+              canvas.offsetWidth - container.offsetLeft
+            );
           }
           if (corner.includes("left")) {
             newWidth = Math.max(10, startWidth - diffX);
           }
           if (corner.includes("bottom")) {
-            newHeight = Math.min(startHeight + diffY, canvas.offsetHeight - container.offsetTop);
+            newHeight = Math.min(
+              startHeight + diffY,
+              canvas.offsetHeight - container.offsetTop
+            );
           }
           if (corner.includes("top")) {
             newHeight = Math.max(10, startHeight - diffY);
@@ -163,7 +171,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function startDrawing() {
     isDrawing = true;
-    alert("Click anywhere inside the canvas to create a textbox");
+    //alert("Click anywhere inside the canvas to create a textbox");
   }
 
   function handleCanvasClick(event) {
@@ -179,15 +187,19 @@ document.addEventListener("DOMContentLoaded", () => {
     isDrawing = false;
   }
 
-  let textBoxCounter = 0;
+  let textBoxCounter = 1;
 
-  function createTextbox(x, y, textContent) {
+  function createTextbox(x, y, textContent, customName="") {
     const textbox = document.createElement("div");
     textbox.classList.add("textbox", "text-item");
     textbox.contentEditable = true;
     textbox.textContent = textContent;
+    const defaultName = `textbox-${textBoxCounter}`;
+    const textBoxName = customName.trim() !== "" ? customName : defaultName;
     textbox.dataset.id = `textbox-${textBoxCounter}`;
     textbox.id = `textbox-${textBoxCounter}`;
+    textbox.dataset.name = textBoxName;
+    textbox.name = textBoxName;
     textBoxCounter++;
 
     textbox.style.position = "absolute";
@@ -224,23 +236,63 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function updatePropertiesPanel(element) {
-    document.getElementById("fontSize").value = parseInt(window.getComputedStyle(element).fontSize) || 16;
+    document.getElementById("fontSize").value =
+        parseInt(element.style.fontSize) || 16;
     document.getElementById("textContent").value = element.textContent;
-    document.getElementById("posX").value = parseInt(element.style.left) || element.offsetLeft;
-    document.getElementById("posY").value = parseInt(element.style.top) || element.offsetTop;
+    document.getElementById("posX").value =
+        parseInt(element.style.left) || element.offsetLeft;
+    document.getElementById("posY").value =
+        parseInt(element.style.top) || element.offsetTop;
     document.getElementById("textboxId").textContent = element.dataset.id;
-  }
+    document.getElementById("textboxName").value = element.dataset.name;
 
-  document.addEventListener("click", (event) => {
+    document
+        .getElementById("fontSize")
+        .addEventListener("input", updateTextboxProperties);
+    document
+        .getElementById("textContent")
+        .addEventListener("input", updateTextboxProperties);
+    document
+        .getElementById("posX")
+        .addEventListener("input", updateTextboxProperties);
+    document
+        .getElementById("posY")
+        .addEventListener("input", updateTextboxProperties);
+    document
+        .getElementById("textboxName") // Add event listener for renaming
+        .addEventListener("input", updateTextboxProperties);
+}
+
+document.addEventListener("click", (event) => {
     if (event.target.classList.contains("text-item")) {
-      updatePropertiesPanel(event.target);
+        updatePropertiesPanel(event.target);
     }
-  });
+});
+
+function updateTextboxProperties() {
+    const textboxId = document.getElementById("textboxId").textContent;
+    if (!textboxId) return;
+
+    const textbox = document.getElementById(textboxId);
+    if (!textbox) return;
+
+    const textboxName = document.getElementById("textboxName").value.trim();
+    if (textboxName) {
+        textbox.dataset.name = textboxName;
+        textbox.name = textboxName;
+
+    textbox.style.fontSize = document.getElementById("fontSize").value + "px";
+    textbox.textContent = document.getElementById("textContent").value;
+    textbox.style.left = document.getElementById("posX").value + "px";
+    textbox.style.top = document.getElementById("posY").value + "px";
+}
+}
 
   function exportConfig() {
     const items = Array.from(canvas.children).map((item) => ({
       type: item.tagName.toLowerCase(),
       src: item.tagName.toLowerCase() === "img" ? item.src : undefined,
+      textBoxName: item.tagName.toLowerCase() === "div" ? item.dataset.name : undefined,
       text: item.tagName.toLowerCase() === "div" ? item.textContent : undefined,
       x: item.offsetLeft,
       y: item.offsetTop,
@@ -253,7 +305,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }));
 
     const config = { paperSize: paperSizeSelect.value, items };
-    const blob = new Blob([JSON.stringify(config, null, 2)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(config, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -278,6 +332,7 @@ document.addEventListener("DOMContentLoaded", () => {
             element.src = item.src;
           } else if (item.type === "div") {
             element = document.createElement("div");
+            element.dataset.name = item.textBoxName;
             element.textContent = item.text;
             element.classList.add("text-item");
             element.contentEditable = true;
@@ -291,6 +346,7 @@ document.addEventListener("DOMContentLoaded", () => {
           element.style.top = `${item.y}px`;
           element.style.width = `${item.width}px`;
           element.style.height = `${item.height}px`;
+          element.style.zIndex = item.zIndex || "auto";
 
           makeDraggable(element);
           makeResizable(element);
@@ -317,7 +373,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const templateImg = document.getElementById("templateImage");
     if (templateImg) {
-      doc.addImage(templateImg.src, "JPEG", 0, 0, canvasWidthMM, canvasHeightMM);
+      doc.addImage(
+        templateImg.src,
+        "JPEG",
+        0,
+        0,
+        canvasWidthMM,
+        canvasHeightMM
+      );
     }
 
     Array.from(canvas.children).forEach((item) => {
@@ -338,7 +401,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const imageData = imgCanvas.toDataURL("image/jpg");
         doc.addImage(imageData, "JPG", x, y, width, height);
       } else if (item.tagName.toLowerCase() === "div") {
-        doc.text(item.textContent, x + 2, y + height / 2);
+        doc.setFontSize(parseFloat(item.style.fontSize) || 16);
+        doc.setTextColor(item.style.color || "#000000");
+        doc.text(item.textContent, x + 2, y + height / 2, {
+          align: item.style.textAlign || "left",
+        });
       }
     });
 
