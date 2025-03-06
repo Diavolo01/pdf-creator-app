@@ -1,0 +1,17 @@
+{
+  "name": "pdf-creator-app",
+  "version": "1.0.0",
+  "description": "This web application allows users to create PDF layouts similar to Canva, where they can add and move images and text around on a selected paper size. Users can customize their design, save their progress as a configuration file, and export the final design as a PDF.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mysql2": "^3.13.0"
+  }
+}
