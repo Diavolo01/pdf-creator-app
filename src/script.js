@@ -225,7 +225,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // }
 
   let clickPosition = null;
-
   // Function to start drawing mode
   function startDrawing() {
     isDrawing = true;
@@ -239,10 +238,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const canvas = document.getElementById("canvas");
       const rect = canvas.getBoundingClientRect();
   
-      //const mouseX = event.clientX - rect.left; //can use both
-      //const mouseY = event.clientY - rect.top;
-      const mouseX = event.offsetX;
-      const mouseY = event.offsetY;
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+      // const mouseX = event.offsetX;  //can use both
+      // const mouseY = event.offsetY;
   
       console.log(`Mouse clicked at: X: ${mouseX}, Y: ${mouseY}`);
       clickPosition = { x: mouseX, y: mouseY };
@@ -255,16 +254,20 @@ document.addEventListener("DOMContentLoaded", () => {
       isDrawing = false;   
   }
   
-
-  // Function to create a textbox at the specified position
+  let textBoxCounter = 0;
+  
   function createTextbox(x, y, textContent) {
     const canvas = document.getElementById("canvas");
 
     // Create a new textbox element
     const textbox = document.createElement("div");
-    textbox.classList.add("textbox");
+    textbox.classList.add("textbox", "text-item");
     textbox.contentEditable = true;
     textbox.textContent = textContent;
+
+    textbox.dataset.id = `textbox-${textBoxCounter}`;
+    textbox.id = `textbox-${textBoxCounter}`;
+    textBoxCounter++;
 
     textbox.style.position = "absolute"; 
     textbox.style.left = `${x}px`;
@@ -276,6 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
     makeDraggable(textbox);
     makeRemovable(textbox);
     makeResizable(textbox);
+    updatePropertiesPanel(textbox);
   }
 
   function makeDraggable(element) {
@@ -299,6 +303,19 @@ document.addEventListener("DOMContentLoaded", () => {
       element.remove();
     });
   }
+
+  function updatePropertiesPanel(element) {
+    document.getElementById("fontSize").value = parseInt(window.getComputedStyle(element).fontSize) || 16;
+    document.getElementById("textContent").value = element.textContent;
+    document.getElementById("posX").value = parseInt(element.style.left) || element.offsetLeft;
+    document.getElementById("posY").value = parseInt(element.style.top) || element.offsetTop;
+    document.getElementById("textboxId").textContent = element.dataset.id;
+  }
+    document.addEventListener("click", function (event) {
+      if (event.target.classList.contains("text-item")) {
+        updatePropertiesPanel(event.target);
+      }
+    });
 
   function exportConfig() {
     const items = Array.from(canvas.children).map((item) => {
