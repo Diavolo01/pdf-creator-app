@@ -44,9 +44,7 @@ app.post("/save-config", (req, res) => {
   if (!filename || !jsonData) {
     return res.status(400).json({ error: "Filename or JSON data missing" });
   }
-
-  // Save the file to the local directory
-  fs.writeFile(`./files/json/${filename}.json`, JSON.stringify(jsonData), function (err) {
+  fs.writeFile(`./public/files/json/${filename}.json`, JSON.stringify(jsonData), function (err) {
     if (err) {
       console.error("Error saving the file:", err);
       return res.status(500).json({ error: "Failed to save JSON file", details: err });
