@@ -285,7 +285,11 @@ function updateTextboxProperties() {
     textbox.textContent = document.getElementById("textContent").value;
     textbox.style.left = document.getElementById("posX").value + "px";
     textbox.style.top = document.getElementById("posY").value + "px";
+
+    $(textbox).resizable("destroy");
+    makeResizable(textbox);
 }
+
 }
 
   function exportConfig() {
@@ -305,14 +309,20 @@ function updateTextboxProperties() {
     }));
 
     const config = { paperSize: paperSizeSelect.value, items };
-    const blob = new Blob([JSON.stringify(config, null, 2)], {
-      type: "application/json",
+    fetch("http://localhost:3000/save-config", {  // Make sure this matches backend
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ filename: "config", jsonData: config }),
+    })
+    .then(response => response.json())
+    .then(data => {
+      alert(data.message);
+    })
+    .catch(error => {
+      console.error("Error:", error);
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "config.json";
-    a.click();
   }
 
   function importConfig(event) {

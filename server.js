@@ -1,11 +1,12 @@
-// app.js
 const express = require("express");
 const mysql = require("mysql2");
 const dotenv = require("dotenv");
+const path = require("path");
+const cors = require("cors");
 
 dotenv.config();  // Load environment variables from .env file
-
 const app = express();
+app.use(cors());
 const port = process.env.PORT || 3000;
 
 // Create a connection to the MySQL database
@@ -25,25 +26,34 @@ db.connect((err) => {
   console.log("Connected to the MySQL database!");
 });
 
-// Middleware to parse JSON bodies
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "public")));
 
-// Define routes
+
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "public/index.html");
 });
 
-// Example of an API endpoint that interacts with MySQL
-app.get("/data", (req, res) => {
-  const query = "SELECT * FROM your_table_name"; // Update with your table
-  db.query(query, (err, results) => {
+
+const fs = require('fs');
+
+app.post("/save-config", (req, res) => {
+  const { filename, jsonData } = req.body;
+
+  // Ensure filename and jsonData are present
+  if (!filename || !jsonData) {
+    return res.status(400).json({ error: "Filename or JSON data missing" });
+  }
+
+  // Save the file to the local directory
+  fs.writeFile(`./files/json/${filename}.json`, JSON.stringify(jsonData), function (err) {
     if (err) {
-      console.error("Error fetching data: ", err);
-      res.status(500).send("Server Error");
-    } else {
-      res.json(results);
+      console.error("Error saving the file:", err);
+      return res.status(500).json({ error: "Failed to save JSON file", details: err });
     }
+
+    // Successfully saved the file
+    res.json({ message: "JSON file saved successfully!" });
   });
 });
 
