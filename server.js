@@ -37,14 +37,14 @@ app.get("/", (req, res) => {
 
 const fs = require('fs');
 
-app.post("/save-config", (req, res) => {
+app.post("/save-config", (req, res) => { 
   const { filename, jsonData } = req.body;
 
   // Ensure filename and jsonData are present
   if (!filename || !jsonData) {
     return res.status(400).json({ error: "Filename or JSON data missing" });
   }
-  fs.writeFile(`./public/files/json/${filename}.json`, JSON.stringify(jsonData), function (err) {
+  fs.writeFile(`./public/files/template/${filename}.json`, JSON.stringify(jsonData), function (err) {
     if (err) {
       console.error("Error saving the file:", err);
       return res.status(500).json({ error: "Failed to save JSON file", details: err });

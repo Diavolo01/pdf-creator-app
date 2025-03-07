@@ -309,21 +309,33 @@ function updateTextboxProperties() {
     }));
 
     const config = { paperSize: paperSizeSelect.value, items };
-    fetch("http://localhost:3000/save-config", {  // Make sure this matches backend
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ filename: "config", jsonData: config }),
-    })
-    .then(response => response.json())
-    .then(data => {
-      alert(data.message);
-    })
-    .catch(error => {
-      console.error("Error:", error);
-    });
-  }
+
+  // Create FormData object
+  const formData = new FormData();
+  var jsonData = JSON.stringify(config);
+  var file = new Blob([jsonData], { type: "application/json" });
+  // Append JSON string of config to the formData
+  formData.append('filename', 'config'); // If you want to send a filename as well
+  formData.append('file[]', file, 'data.json');
+  //add file image
+  const templateImg = document.getElementById("templateImage");
+  if (templateImg) {
+    formData.append('file[]', templateImg.src);
+  } 
+
+  // Send FormData via fetch
+  fetch("http://localhost:3000/save-config", {
+    method: "POST",
+    body: formData,  // Send form data directly
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert(data.message);  // Assuming the response has a message field
+  })
+  .catch(error => {
+    console.error("Error:", error);
+  });
+}
 
   function importConfig(event) {
     const file = event.target.files[0];
