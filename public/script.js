@@ -291,8 +291,8 @@ document.addEventListener("DOMContentLoaded", () => {
     textbox.style.position = "absolute";
     textbox.style.left = `${x}px`;
     textbox.style.top = `${y}px`;
-    textbox.style.width = "100px";
-    textbox.style.height = "50px";
+    // textbox.style.width = "100px";
+    // textbox.style.height = "15px";
 
     canvas.appendChild(textbox);
     makeDraggable(textbox);
