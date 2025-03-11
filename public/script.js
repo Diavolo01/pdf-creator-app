@@ -19,7 +19,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentPage = 1;
   let totalPages = 1;
 
-  //paperSizeSelect.addEventListener("change", updateCanvasSize);
   addImageUrlButton.addEventListener("click", addImageUrl);
   exportConfigButton.addEventListener("click", exportConfig);
   importConfigButton.addEventListener("click", () => importFileInput.click());
@@ -30,17 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
   canvas.addEventListener("click", handleCanvasClick);
   prevPageButton.addEventListener("click", showPreviousPage);
   nextPageButton.addEventListener("click", showNextPage);
-
-  // function updateCanvasSize() {
-  //   const size = paperSizeSelect.value;
-  //   const sizes = {
-  //     A4: { width: "210mm", height: "297mm" },
-  //     A3: { width: "297mm", height: "420mm" },
-  //   };
-  //   const { width, height } = sizes[size] || sizes.A4;
-  //   canvas.style.width = width;
-  //   canvas.style.height = height;
-  // }
 
   function addTemplate() {
     const input = document.createElement("input");
@@ -390,27 +378,46 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function exportConfig() {
-    const items = Array.from(canvas.children).map((item) => ({
-      type: item.tagName.toLowerCase(),
-      src: item.tagName.toLowerCase() === "img" ? item.src : undefined,
-      textBoxName: item.tagName.toLowerCase() === "div" ? item.dataset.name : undefined,
-      text: item.tagName.toLowerCase() === "div" ? item.textContent : undefined,
-      x: item.offsetLeft,
-      y: item.offsetTop,
-      width: item.offsetWidth,
-      height: item.offsetHeight,
-      zIndex: item.style.zIndex || "auto",
-      fontSize: item.style.fontSize || "16px",
-      fontColor: item.style.color || "#000000",
-      textAlign: item.style.textAlign || "left",
-    }));
+    // Get template image info (if exists)
+    const templateImg = document.getElementById("templateImage");
+    let templateSrc = null;
+    
+    if (templateImg) {
+      templateSrc = templateImg.src;
+    }
+    
+    // Get canvas dimensions
+    const canvasWidth = parseFloat(canvas.style.width);
+    const canvasHeight = parseFloat(canvas.style.height);
+    
+    // Get all items (excluding the template image)
+    const items = Array.from(canvas.children)
+      .filter(item => item.id !== "templateImage")
+      .map((item) => ({
+        type: item.tagName.toLowerCase(),
+        src: item.tagName.toLowerCase() === "img" ? item.src : undefined,
+        textBoxName: item.classList.contains("text-item") ? item.dataset.name : undefined,
+        text: item.classList.contains("text-item") ? item.textContent : undefined,
+        x: item.offsetLeft,
+        y: item.offsetTop,
+        width: item.offsetWidth,
+        height: item.offsetHeight,
+        zIndex: item.style.zIndex || "auto",
+        fontSize: item.style.fontSize || "16px",
+        fontColor: item.style.color || "#000000",
+        textAlign: item.style.textAlign || "left",
+      }));
 
+    // Create the config object
     const config = { 
-      paperSize: paperSizeSelect.value, 
+      canvasWidth,
+      canvasHeight,
       items,
-      pdfInfo: currentPdf ? { currentPage, totalPages } : null
+      pdfInfo: currentPdf ? { currentPage, totalPages } : null,
+      templateSrc: templateSrc
     };
     
+    // Save the config as a JSON file
     const blob = new Blob([JSON.stringify(config, null, 2)], {
       type: "application/json",
     });
@@ -426,49 +433,67 @@ document.addEventListener("DOMContentLoaded", () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const config = JSON.parse(e.target.result);
-        paperSizeSelect.value = config.paperSize;
-        updateCanvasSize();
-        canvas.innerHTML = "";
-
-        config.items.forEach((item) => {
-          let element;
-          if (item.type === "img") {
-            element = document.createElement("img");
-            element.src = item.src;
-          } else if (item.type === "div") {
-            element = document.createElement("div");
-            element.dataset.name = item.textBoxName;
-            element.textContent = item.text;
-            element.classList.add("text-item");
-            element.contentEditable = true;
-            element.style.fontSize = item.fontSize || "16px";
-            element.style.color = item.fontColor || "#000000";
-            element.style.textAlign = item.textAlign || "left";
+        try {
+          const config = JSON.parse(e.target.result);
+          
+          // Clear the canvas first
+          canvas.innerHTML = "";
+          
+          // Set canvas dimensions
+          if (config.canvasWidth && config.canvasHeight) {
+            canvas.style.width = `${config.canvasWidth}px`;
+            canvas.style.height = `${config.canvasHeight}px`;
           }
-          element.classList.add("item");
-          element.style.position = "absolute";
-          element.style.left = `${item.x}px`;
-          element.style.top = `${item.y}px`;
-          element.style.width = `${item.width}px`;
-          element.style.height = `${item.height}px`;
-          element.style.zIndex = item.zIndex || "auto";
-
-          makeDraggable(element);
-          makeResizable(element);
-          makeRemovable(element);
-
-          canvas.appendChild(element);
-        });
-        
-        // If PDF info is available in the config, update PDF controls
-        if (config.pdfInfo) {
-          pdfControls.style.display = "block";
-          currentPage = config.pdfInfo.currentPage || 1;
-          totalPages = config.pdfInfo.totalPages || 1;
-          updatePageInfo();
-        } else {
-          pdfControls.style.display = "none";
+          
+          // Restore template image if it exists in the config
+          if (config.templateSrc) {
+            const templateImg = document.createElement("img");
+            templateImg.id = "templateImage";
+            templateImg.style.position = "absolute";
+            templateImg.style.top = "0";
+            templateImg.style.left = "0";
+            templateImg.style.zIndex = "-1";
+            templateImg.src = config.templateSrc;
+            canvas.appendChild(templateImg);
+          }
+          
+          // Add all items back to the canvas
+          config.items.forEach((item) => {
+            if (item.type === "img") {
+              const imgContainer = createImageContainer(item.src);
+              imgContainer.style.left = `${item.x}px`;
+              imgContainer.style.top = `${item.y}px`;
+              imgContainer.style.width = `${item.width}px`;
+              imgContainer.style.height = `${item.height}px`;
+              imgContainer.style.zIndex = item.zIndex || "auto";
+              canvas.appendChild(imgContainer);
+            } else if (item.text) {
+              createTextbox(item.x, item.y, item.text, item.textBoxName);
+              const textbox = document.querySelector(`[data-name="${item.textBoxName}"]`);
+              if (textbox) {
+                textbox.style.width = `${item.width}px`;
+                textbox.style.height = `${item.height}px`;
+                textbox.style.fontSize = item.fontSize || "16px";
+                textbox.style.color = item.fontColor || "#000000";
+                textbox.style.textAlign = item.textAlign || "left";
+                textbox.style.zIndex = item.zIndex || "auto";
+              }
+            }
+          });
+          
+          // If PDF info is available in the config, update PDF controls
+          if (config.pdfInfo) {
+            pdfControls.style.display = "block";
+            currentPage = config.pdfInfo.currentPage || 1;
+            totalPages = config.pdfInfo.totalPages || 1;
+            updatePageInfo();
+          } else {
+            pdfControls.style.display = "none";
+          }
+          
+        } catch (error) {
+          console.error("Error importing config:", error);
+          alert("Invalid configuration file. Please try again.");
         }
       };
       reader.readAsText(file);
@@ -577,5 +602,4 @@ document.addEventListener("DOMContentLoaded", () => {
   
     doc.save("layout.pdf");
   }
-  //updateCanvasSize();
 });
