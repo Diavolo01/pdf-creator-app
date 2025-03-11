@@ -8,7 +8,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const createPdfButton = document.getElementById("createPDF");
   const addTemplateButton = document.getElementById("addTemplate");
   const startDrawButton = document.getElementById("startDraw");
+  const prevPageButton = document.getElementById("prevPage");
+  const nextPageButton = document.getElementById("nextPage");
+  const pageInfoSpan = document.getElementById("pageInfo");
+  const pdfControls = document.getElementById("pdfControls");
   let isDrawing = false;
+  
+  // PDF navigation variables
+  let currentPdf = null;
+  let currentPage = 1;
+  let totalPages = 1;
 
   paperSizeSelect.addEventListener("change", updateCanvasSize);
   addImageUrlButton.addEventListener("click", addImageUrl);
@@ -19,6 +28,8 @@ document.addEventListener("DOMContentLoaded", () => {
   addTemplateButton.addEventListener("click", addTemplate);
   startDrawButton.addEventListener("click", startDrawing);
   canvas.addEventListener("click", handleCanvasClick);
+  prevPageButton.addEventListener("click", showPreviousPage);
+  nextPageButton.addEventListener("click", showNextPage);
 
   function updateCanvasSize() {
     const size = paperSizeSelect.value;
@@ -39,31 +50,116 @@ document.addEventListener("DOMContentLoaded", () => {
   function addTemplate() {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "image/*";
+    input.accept = "image/jpg, application/pdf, image/png, image/jpeg";
     input.addEventListener("change", handleTemplateChange);
     input.click();
   }
 
-  function handleTemplateChange(event) {
+  async function handleTemplateChange(event) {
     const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        let templateImg = document.getElementById("templateImage");
-        if (!templateImg) {
-          templateImg = document.createElement("img");
-          templateImg.id = "templateImage";
-          templateImg.style.position = "absolute";
-          templateImg.style.top = "0";
-          templateImg.style.left = "0";
-          templateImg.style.zIndex = "-1";
-          canvas.appendChild(templateImg);
-        }
+    if (!file) return;
+
+    const reader = new FileReader();
+    
+    reader.onload = async (e) => {
+      let templateImg = document.getElementById("templateImage");
+      if (!templateImg) {
+        templateImg = document.createElement("img");
+        templateImg.id = "templateImage";
+        templateImg.style.position = "absolute";
+        templateImg.style.top = "0";
+        templateImg.style.left = "0";
+        templateImg.style.zIndex = "-1";
+        canvas.appendChild(templateImg);
+      }
+
+      if (file.type === "application/pdf") {
+        const pdfData = new Uint8Array(e.target.result);
+        // Store the PDF for later use with navigation
+        currentPdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+        
+        // Get the total number of pages
+        totalPages = currentPdf.numPages;
+        currentPage = 1;
+        
+        // Show PDF controls
+        pdfControls.style.display = "block";
+        updatePageInfo();
+        
+        // Render the first page
+        await renderPdfPage(currentPage);
+      } else {
+        // For non-PDF files, hide the PDF controls
+        pdfControls.style.display = "none";
         templateImg.src = e.target.result;
         templateImg.style.width = canvas.style.width;
         templateImg.style.height = canvas.style.height;
-      };
+      }
+    };
+
+    if (file.type === "application/pdf") {
+      reader.readAsArrayBuffer(file);
+    } else {
       reader.readAsDataURL(file);
+    }
+  }
+
+  async function renderPdfPage(pageNumber) {
+    if (!currentPdf) return;
+    
+    try {
+      const page = await currentPdf.getPage(pageNumber);
+      const scale = 2;
+      const viewport = page.getViewport({ scale });
+      
+      const canvasTemp = document.createElement("canvas");
+      canvasTemp.width = viewport.width;
+      canvasTemp.height = viewport.height;
+      const context = canvasTemp.getContext("2d");
+
+      const renderContext = { canvasContext: context, viewport };
+      await page.render(renderContext).promise;
+
+      let templateImg = document.getElementById("templateImage");
+      if (!templateImg) {
+        templateImg = document.createElement("img");
+        templateImg.id = "templateImage";
+        templateImg.style.position = "absolute";
+        templateImg.style.top = "0";
+        templateImg.style.left = "0";
+        templateImg.style.zIndex = "-1";
+        canvas.appendChild(templateImg);
+      }
+      
+      templateImg.src = canvasTemp.toDataURL("image/png");
+      templateImg.style.width = canvas.style.width;
+      templateImg.style.height = canvas.style.height;
+      
+      updatePageInfo();
+    } catch (error) {
+      console.error("Error rendering PDF page:", error);
+    }
+  }
+
+  function updatePageInfo() {
+    pageInfoSpan.textContent = `Page ${currentPage} of ${totalPages}`;
+    
+    // Enable/disable navigation buttons based on current page
+    prevPageButton.disabled = currentPage <= 1;
+    nextPageButton.disabled = currentPage >= totalPages;
+  }
+
+  function showPreviousPage() {
+    if (currentPage > 1) {
+      currentPage--;
+      renderPdfPage(currentPage);
+    }
+  }
+
+  function showNextPage() {
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderPdfPage(currentPage);
     }
   }
 
@@ -171,7 +267,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function startDrawing() {
     isDrawing = true;
-    //alert("Click anywhere inside the canvas to create a textbox");
   }
 
   function handleCanvasClick(event) {
@@ -259,38 +354,37 @@ document.addEventListener("DOMContentLoaded", () => {
         .getElementById("posY")
         .addEventListener("input", updateTextboxProperties);
     document
-        .getElementById("textboxName") // Add event listener for renaming
+        .getElementById("textboxName")
         .addEventListener("input", updateTextboxProperties);
-}
+  }
 
-document.addEventListener("click", (event) => {
-    if (event.target.classList.contains("text-item")) {
-        updatePropertiesPanel(event.target);
-    }
-});
+  document.addEventListener("click", (event) => {
+      if (event.target.classList.contains("text-item")) {
+          updatePropertiesPanel(event.target);
+      }
+  });
 
-function updateTextboxProperties() {
-    const textboxId = document.getElementById("textboxId").textContent;
-    if (!textboxId) return;
+  function updateTextboxProperties() {
+      const textboxId = document.getElementById("textboxId").textContent;
+      if (!textboxId) return;
 
-    const textbox = document.getElementById(textboxId);
-    if (!textbox) return;
+      const textbox = document.getElementById(textboxId);
+      if (!textbox) return;
 
-    const textboxName = document.getElementById("textboxName").value.trim();
-    if (textboxName) {
-        textbox.dataset.name = textboxName;
-        textbox.name = textboxName;
+      const textboxName = document.getElementById("textboxName").value.trim();
+      if (textboxName) {
+          textbox.dataset.name = textboxName;
+          textbox.name = textboxName;
+      }
 
-    textbox.style.fontSize = document.getElementById("fontSize").value + "px";
-    textbox.textContent = document.getElementById("textContent").value;
-    textbox.style.left = document.getElementById("posX").value + "px";
-    textbox.style.top = document.getElementById("posY").value + "px";
+      textbox.style.fontSize = document.getElementById("fontSize").value + "px";
+      textbox.textContent = document.getElementById("textContent").value;
+      textbox.style.left = document.getElementById("posX").value + "px";
+      textbox.style.top = document.getElementById("posY").value + "px";
 
-    $(textbox).resizable("destroy");
-    makeResizable(textbox);
-}
-
-}
+      $(textbox).resizable("destroy");
+      makeResizable(textbox);
+  }
 
   function exportConfig() {
     const items = Array.from(canvas.children).map((item) => ({
@@ -308,34 +402,21 @@ function updateTextboxProperties() {
       textAlign: item.style.textAlign || "left",
     }));
 
-    const config = { paperSize: paperSizeSelect.value, items };
-
-  // Create FormData object
-  const formData = new FormData();
-  var jsonData = JSON.stringify(config);
-  var file = new Blob([jsonData], { type: "application/json" });
-  // Append JSON string of config to the formData
-  formData.append('filename', 'config'); // If you want to send a filename as well
-  formData.append('file[]', file, 'data.json');
-  //add file image
-  const templateImg = document.getElementById("templateImage");
-  if (templateImg) {
-    formData.append('file[]', templateImg.src);
-  } 
-
-  // Send FormData via fetch
-  fetch("http://localhost:3000/save-config", {
-    method: "POST",
-    body: formData,  // Send form data directly
-  })
-  .then(response => response.json())
-  .then(data => {
-    alert(data.message);  // Assuming the response has a message field
-  })
-  .catch(error => {
-    console.error("Error:", error);
-  });
-}
+    const config = { 
+      paperSize: paperSizeSelect.value, 
+      items,
+      pdfInfo: currentPdf ? { currentPage, totalPages } : null
+    };
+    
+    const blob = new Blob([JSON.stringify(config, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "config.json";
+    a.click();
+  }
 
   function importConfig(event) {
     const file = event.target.files[0];
@@ -376,6 +457,16 @@ function updateTextboxProperties() {
 
           canvas.appendChild(element);
         });
+        
+        // If PDF info is available in the config, update PDF controls
+        if (config.pdfInfo) {
+          pdfControls.style.display = "block";
+          currentPage = config.pdfInfo.currentPage || 1;
+          totalPages = config.pdfInfo.totalPages || 1;
+          updatePageInfo();
+        } else {
+          pdfControls.style.display = "none";
+        }
       };
       reader.readAsText(file);
     }

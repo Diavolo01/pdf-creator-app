@@ -25,6 +25,13 @@
       <input type="file" id="importFile" style="display: none" />
       <button id="createPDF">Create PDF</button>
     </div>
+    <div id="pdfControls" style="display: none;">
+      <button id="prevPage">Previous Page</button>
+      <span id="pageInfo">Page 1 of 1</span>
+      <button id="nextPage">Next Page</button>
+      <br>
+      <br>
+    </div>
     <div id="canvasContainer">
       <div id="canvas"></div>
     </div>
@@ -51,5 +58,8 @@
   <script src="handletext.js"></script>
     <script src="script.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="js/pdf-lib.min.js"></script>
+    <script src="js/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-lib@0.0.149/build/pdf.min.js"></script>
   </body>
 </html>
