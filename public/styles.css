@@ -17,7 +17,7 @@ body {
 
 #canvasContainer {
     width: 100%;
-    height: 80vh; /* Make sure it takes up enough space */
+    height: 100%; 
     display: flex;
     align-items: flex-start; /* Align to top to avoid centering issues */
     justify-content: center;
@@ -48,8 +48,6 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
     z-index: -1;
 }
 

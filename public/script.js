@@ -50,69 +50,12 @@ document.addEventListener("DOMContentLoaded", () => {
     input.click();
   }
 
-  async function handleTemplateChange(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-  
-    const reader = new FileReader();
-    
-    reader.onload = async (e) => {
-      let templateImg = document.getElementById("templateImage");
-      if (!templateImg) {
-        templateImg = document.createElement("img");
-        templateImg.id = "templateImage";
-        templateImg.style.position = "absolute";
-        templateImg.style.top = "0";
-        templateImg.style.left = "0";
-        templateImg.style.zIndex = "-1";
-        canvas.appendChild(templateImg);
-      }
-  
-      if (file.type === "application/pdf") {
-        const pdfData = new Uint8Array(e.target.result);
-        // Store the PDF for later use with navigation
-        currentPdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-        
-        // Get the total number of pages
-        totalPages = currentPdf.numPages;
-        currentPage = 1;
-        
-        // Show PDF controls
-        pdfControls.style.display = "block";
-        updatePageInfo();
-        
-        // Render the first page and adjust the canvas size
-        await renderPdfPage(currentPage);
-      } else {
-        // For image files
-        const img = new Image();
-        img.onload = () => {
-          // Adjust canvas size based on image dimensions
-          canvas.style.width = img.width + 'px';
-          canvas.style.height = img.height + 'px';
-          
-          templateImg.src = e.target.result;
-          templateImg.style.width = '100%'; // Ensure the image fits the canvas
-          templateImg.style.height = '100%'; // Ensure the image fits the canvas
-        };
-        img.src = e.target.result;
-      }
-    };
-  
-    if (file.type === "application/pdf") {
-      reader.readAsArrayBuffer(file);
-    } else {
-      reader.readAsDataURL(file);
-    }
-  }
-  
-
   async function renderPdfPage(pageNumber) {
     if (!currentPdf) return;
         
     try {
       const page = await currentPdf.getPage(pageNumber);
-      const scale = 1.5;
+      const scale = 2;
       const viewport = page.getViewport({ scale });
           
       // Adjust the canvas size based on PDF page dimensions
@@ -139,9 +82,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
           
       templateImg.src = canvasTemp.toDataURL("image/png");
-      // Set the template image to fully cover the canvas
-      templateImg.style.width = '100%';
-      templateImg.style.height = '100%';
           
       updatePageInfo();
     } catch (error) {
@@ -192,8 +132,6 @@ document.addEventListener("DOMContentLoaded", () => {
           canvas.style.height = img.height + 'px';
                   
           templateImg.src = e.target.result;
-          templateImg.style.width = '100%'; 
-          templateImg.style.height = '100%';
         };
         img.src = e.target.result;
       }
@@ -639,5 +577,5 @@ document.addEventListener("DOMContentLoaded", () => {
   
     doc.save("layout.pdf");
   }
-  updateCanvasSize();
+  //updateCanvasSize();
 });
