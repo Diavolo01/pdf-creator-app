@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentPage = 1;
   let totalPages = 1;
 
-  paperSizeSelect.addEventListener("change", updateCanvasSize);
+  //paperSizeSelect.addEventListener("change", updateCanvasSize);
   addImageUrlButton.addEventListener("click", addImageUrl);
   exportConfigButton.addEventListener("click", exportConfig);
   importConfigButton.addEventListener("click", () => importFileInput.click());
@@ -31,21 +31,16 @@ document.addEventListener("DOMContentLoaded", () => {
   prevPageButton.addEventListener("click", showPreviousPage);
   nextPageButton.addEventListener("click", showNextPage);
 
-  function updateCanvasSize() {
-    const size = paperSizeSelect.value;
-    const sizes = {
-      A4: { width: "210mm", height: "297mm" },
-      A3: { width: "297mm", height: "420mm" },
-      custom: () => {
-        const customWidth = prompt("Enter custom width (mm):");
-        const customHeight = prompt("Enter custom height (mm):");
-        return { width: `${customWidth}mm`, height: `${customHeight}mm` };
-      },
-    };
-    const { width, height } = sizes[size] || sizes.A4;
-    canvas.style.width = width;
-    canvas.style.height = height;
-  }
+  // function updateCanvasSize() {
+  //   const size = paperSizeSelect.value;
+  //   const sizes = {
+  //     A4: { width: "210mm", height: "297mm" },
+  //     A3: { width: "297mm", height: "420mm" },
+  //   };
+  //   const { width, height } = sizes[size] || sizes.A4;
+  //   canvas.style.width = width;
+  //   canvas.style.height = height;
+  // }
 
   function addTemplate() {
     const input = document.createElement("input");
@@ -58,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function handleTemplateChange(event) {
     const file = event.target.files[0];
     if (!file) return;
-
+  
     const reader = new FileReader();
     
     reader.onload = async (e) => {
@@ -72,7 +67,7 @@ document.addEventListener("DOMContentLoaded", () => {
         templateImg.style.zIndex = "-1";
         canvas.appendChild(templateImg);
       }
-
+  
       if (file.type === "application/pdf") {
         const pdfData = new Uint8Array(e.target.result);
         // Store the PDF for later use with navigation
@@ -86,40 +81,52 @@ document.addEventListener("DOMContentLoaded", () => {
         pdfControls.style.display = "block";
         updatePageInfo();
         
-        // Render the first page
+        // Render the first page and adjust the canvas size
         await renderPdfPage(currentPage);
       } else {
-        // For non-PDF files, hide the PDF controls
-        pdfControls.style.display = "none";
-        templateImg.src = e.target.result;
-        templateImg.style.width = canvas.style.width;
-        templateImg.style.height = canvas.style.height;
+        // For image files
+        const img = new Image();
+        img.onload = () => {
+          // Adjust canvas size based on image dimensions
+          canvas.style.width = img.width + 'px';
+          canvas.style.height = img.height + 'px';
+          
+          templateImg.src = e.target.result;
+          templateImg.style.width = '100%'; // Ensure the image fits the canvas
+          templateImg.style.height = '100%'; // Ensure the image fits the canvas
+        };
+        img.src = e.target.result;
       }
     };
-
+  
     if (file.type === "application/pdf") {
       reader.readAsArrayBuffer(file);
     } else {
       reader.readAsDataURL(file);
     }
   }
+  
 
   async function renderPdfPage(pageNumber) {
     if (!currentPdf) return;
-    
+        
     try {
       const page = await currentPdf.getPage(pageNumber);
-      const scale = 2;
+      const scale = 1.5;
       const viewport = page.getViewport({ scale });
-      
+          
+      // Adjust the canvas size based on PDF page dimensions
+      canvas.style.width = viewport.width + 'px';
+      canvas.style.height = viewport.height + 'px';
+          
       const canvasTemp = document.createElement("canvas");
       canvasTemp.width = viewport.width;
       canvasTemp.height = viewport.height;
       const context = canvasTemp.getContext("2d");
-
+      
       const renderContext = { canvasContext: context, viewport };
       await page.render(renderContext).promise;
-
+      
       let templateImg = document.getElementById("templateImage");
       if (!templateImg) {
         templateImg = document.createElement("img");
@@ -130,14 +137,72 @@ document.addEventListener("DOMContentLoaded", () => {
         templateImg.style.zIndex = "-1";
         canvas.appendChild(templateImg);
       }
-      
+          
       templateImg.src = canvasTemp.toDataURL("image/png");
-      templateImg.style.width = canvas.style.width;
-      templateImg.style.height = canvas.style.height;
-      
+      // Set the template image to fully cover the canvas
+      templateImg.style.width = '100%';
+      templateImg.style.height = '100%';
+          
       updatePageInfo();
     } catch (error) {
       console.error("Error rendering PDF page:", error);
+    }
+  }
+  
+  // For image files in handleTemplateChange function, ensure consistent sizing approach
+  async function handleTemplateChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+      
+    const reader = new FileReader();
+        
+    reader.onload = async (e) => {
+      let templateImg = document.getElementById("templateImage");
+      if (!templateImg) {
+        templateImg = document.createElement("img");
+        templateImg.id = "templateImage";
+        templateImg.style.position = "absolute";
+        templateImg.style.top = "0";
+        templateImg.style.left = "0";
+        templateImg.style.zIndex = "-1";
+        canvas.appendChild(templateImg);
+      }
+        
+      if (file.type === "application/pdf") {
+        const pdfData = new Uint8Array(e.target.result);
+        // Store the PDF for later use with navigation
+        currentPdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+              
+        // Get the total number of pages
+        totalPages = currentPdf.numPages;
+        currentPage = 1;
+              
+        // Show PDF controls
+        pdfControls.style.display = "block";
+        updatePageInfo();
+              
+        // Render the first page and adjust the canvas size
+        await renderPdfPage(currentPage);
+      } else {
+        // For image files
+        const img = new Image();
+        img.onload = () => {
+          // Adjust canvas size based on image dimensions
+          canvas.style.width = img.width + 'px';
+          canvas.style.height = img.height + 'px';
+                  
+          templateImg.src = e.target.result;
+          templateImg.style.width = '100%'; 
+          templateImg.style.height = '100%';
+        };
+        img.src = e.target.result;
+      }
+    };
+      
+    if (file.type === "application/pdf") {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsDataURL(file);
     }
   }
 
@@ -474,16 +539,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function createPdf() {
     const { jsPDF } = window.jspdf;
-
-    const canvasWidthMM = parseFloat(canvas.style.width);
-    const canvasHeightMM = parseFloat(canvas.style.height);
-
+  
+    // Get canvas dimensions in pixels
+    const canvasWidthPx = parseFloat(canvas.style.width);
+    const canvasHeightPx = parseFloat(canvas.style.height);
+    
+    // Convert pixels to mm for PDF (assuming 96 DPI)
+    const pxToMm = 0.264583333;
+    const canvasWidthMM = canvasWidthPx * pxToMm;
+    const canvasHeightMM = canvasHeightPx * pxToMm;
+  
     const doc = new jsPDF({
-      orientation: "portrait",
+      orientation: canvasWidthMM > canvasHeightMM ? "landscape" : "portrait",
       unit: "mm",
       format: [canvasWidthMM, canvasHeightMM],
     });
-
+  
     const templateImg = document.getElementById("templateImage");
     if (templateImg) {
       doc.addImage(
@@ -495,35 +566,78 @@ document.addEventListener("DOMContentLoaded", () => {
         canvasHeightMM
       );
     }
-
+  
     Array.from(canvas.children).forEach((item) => {
       if (item.id === "templateImage") return;
-
-      const x = (item.offsetLeft / canvas.offsetWidth) * canvasWidthMM;
-      const y = (item.offsetTop / canvas.offsetHeight) * canvasHeightMM;
-      const width = (item.offsetWidth / canvas.offsetWidth) * canvasWidthMM;
-      const height = (item.offsetHeight / canvas.offsetHeight) * canvasHeightMM;
-
+  
+      // Calculate positions and dimensions in mm
+      const x = (item.offsetLeft / canvasWidthPx) * canvasWidthMM;
+      const y = (item.offsetTop / canvasHeightPx) * canvasHeightMM;
+      const width = (item.offsetWidth / canvasWidthPx) * canvasWidthMM;
+      const height = (item.offsetHeight / canvasHeightPx) * canvasHeightMM;
+  
       if (item.tagName.toLowerCase() === "img") {
         const imgCanvas = document.createElement("canvas");
         imgCanvas.width = item.naturalWidth;
         imgCanvas.height = item.naturalHeight;
         const ctx = imgCanvas.getContext("2d");
         ctx.drawImage(item, 0, 0);
-
+  
         const imageData = imgCanvas.toDataURL("image/jpg");
         doc.addImage(imageData, "JPG", x, y, width, height);
       } else if (item.tagName.toLowerCase() === "div") {
-        doc.setFontSize(parseFloat(item.style.fontSize) || 16);
-        doc.setTextColor(item.style.color || "#000000");
-        doc.text(item.textContent, x + 2, y + height / 2, {
-          align: item.style.textAlign || "left",
+        // Extract text styling from the div element
+        const computedStyle = window.getComputedStyle(item);
+        const fontSize = parseFloat(computedStyle.fontSize) || 16;
+        
+        // Convert font size from px to pt for PDF (1pt ≈ 0.75px)
+        const fontSizePt = fontSize * 0.75;
+        
+        // Set font properties
+        doc.setFontSize(fontSizePt);
+        doc.setTextColor(computedStyle.color || "#000000");
+        
+        // Get text alignment
+        let textAlign = computedStyle.textAlign || "left";
+        
+        // Ensure textAlign is one of the allowed values
+        if (!["left", "center", "right", "justify"].includes(textAlign)) {
+          textAlign = "left"; // Default to left if invalid
+        }
+        
+        // Handle text alignment
+        let xPos = x;
+        if (textAlign === "center") {
+          xPos = x + width/2;
+        } else if (textAlign === "right") {
+          xPos = x + width;
+        }
+        
+        // Handle font style 
+        let fontStyle = "normal";
+        if (computedStyle.fontWeight >= 700 && computedStyle.fontStyle === "italic") {
+          fontStyle = "bolditalic";
+        } else if (computedStyle.fontWeight >= 700) {
+          fontStyle = "bold";
+        } else if (computedStyle.fontStyle === "italic") {
+          fontStyle = "italic";
+        }
+        
+        // Set the font - must use standard jsPDF font names
+        doc.setFont("helvetica", fontStyle);
+        
+        // Add the text with proper styling
+        // jsPDF positioning is from the baseline of text, not the top
+        const yPos = y + height/2 + fontSizePt * 0.3;
+        
+        doc.text(item.textContent, xPos, yPos, {
+          align: textAlign,
+          maxWidth: width
         });
       }
     });
-
+  
     doc.save("layout.pdf");
   }
-
   updateCanvasSize();
 });
