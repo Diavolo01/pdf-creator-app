@@ -243,65 +243,103 @@ function convertImageToBase64(imageUrl) {
 }
 
 
-  function createResizeHandles(container) {
-    const corners = ["top-left", "top-right", "bottom-left", "bottom-right"];
+function makeDraggable(container) {
+  let isResizing = false;
 
-    corners.forEach((corner) => {
-      const handle = document.createElement("div");
-      handle.classList.add("resize-handle", corner);
-      container.appendChild(handle);
+  container.addEventListener("mousedown", (e) => {
+    if (e.target.classList.contains("resize-handle")) return; // Prevent moving while resizing
 
-      handle.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        const startX = e.clientX;
-        const startY = e.clientY;
-        const startWidth = container.offsetWidth;
-        const startHeight = container.offsetHeight;
+    e.preventDefault();
+    let startX = e.clientX;
+    let startY = e.clientY;
+    let startLeft = container.offsetLeft;
+    let startTop = container.offsetTop;
 
-        const resize = (e) => {
-          const diffX = e.clientX - startX;
-          const diffY = e.clientY - startY;
+    const move = (e) => {
+      if (isResizing) return; // Stop movement while resizing
 
-          let newWidth = startWidth;
-          let newHeight = startHeight;
+      let newLeft = startLeft + (e.clientX - startX);
+      let newTop = startTop + (e.clientY - startY);
+      container.style.left = `${newLeft}px`;
+      container.style.top = `${newTop}px`;
+    };
 
-          if (corner.includes("right")) {
-            newWidth = Math.min(
-              startWidth + diffX,
-              canvas.offsetWidth - container.offsetLeft
-            );
-          }
-          if (corner.includes("left")) {
-            newWidth = Math.max(10, startWidth - diffX);
-            // Maintain position when resizing from left
-            container.style.left = `${container.offsetLeft + (startWidth - newWidth)}px`;
-          }
-          if (corner.includes("bottom")) {
-            newHeight = Math.min(
-              startHeight + diffY,
-              canvas.offsetHeight - container.offsetTop
-            );
-          }
-          if (corner.includes("top")) {
-            newHeight = Math.max(10, startHeight - diffY);
-            // Maintain position when resizing from top
-            container.style.top = `${container.offsetTop + (startHeight - newHeight)}px`;
-          }
+    const stopMove = () => {
+      document.removeEventListener("mousemove", move);
+      document.removeEventListener("mouseup", stopMove);
+    };
 
-          container.style.width = `${newWidth}px`;
-          container.style.height = `${newHeight}px`;
-        };
+    document.addEventListener("mousemove", move);
+    document.addEventListener("mouseup", stopMove);
+  });
 
-        const stopResize = () => {
-          document.removeEventListener("mousemove", resize);
-          document.removeEventListener("mouseup", stopResize);
-        };
+  // Pass actual function references for starting and stopping resize
+  createResizeHandles(container, () => (isResizing = true), () => (isResizing = false));
+}
 
-        document.addEventListener("mousemove", resize);
-        document.addEventListener("mouseup", stopResize);
-      });
+function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = () => {}) {
+  const corners = ["top-left", "top-right", "bottom-left", "bottom-right"];
+
+  corners.forEach((corner) => {
+    const handle = document.createElement("div");
+    handle.classList.add("resize-handle", corner);
+    container.appendChild(handle);
+
+    handle.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      e.stopPropagation(); // Prevent triggering container drag event
+
+      onResizeStart(); // Mark resizing as active
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startWidth = container.offsetWidth;
+      const startHeight = container.offsetHeight;
+      const startLeft = container.offsetLeft;
+      const startTop = container.offsetTop;
+
+      const resize = (e) => {
+        const diffX = e.clientX - startX;
+        const diffY = e.clientY - startY;
+
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        let newLeft = startLeft;
+        let newTop = startTop;
+
+        if (corner.includes("right")) {
+          newWidth = startWidth + diffX;
+        }
+        if (corner.includes("left")) {
+          newWidth = startWidth - diffX;
+          newLeft = startLeft + diffX;
+        }
+        if (corner.includes("bottom")) {
+          newHeight = startHeight + diffY;
+        }
+        if (corner.includes("top")) {
+          newHeight = startHeight - diffY;
+          newTop = startTop + diffY;
+        }
+
+        container.style.width = `${Math.max(10, newWidth)}px`;
+        container.style.height = `${Math.max(10, newHeight)}px`;
+
+        if (corner.includes("left")) container.style.left = `${newLeft}px`;
+        if (corner.includes("top")) container.style.top = `${newTop}px`;
+      };
+
+      const stopResize = () => {
+        onResizeEnd(); // Mark resizing as inactive
+        document.removeEventListener("mousemove", resize);
+        document.removeEventListener("mouseup", stopResize);
+      };
+
+      document.addEventListener("mousemove", resize);
+      document.addEventListener("mouseup", stopResize);
     });
-  }
+  });
+}
 
   function startDrawing() {
     isDrawing = true;
