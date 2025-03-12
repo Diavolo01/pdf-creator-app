@@ -390,7 +390,6 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
     $(element).draggable({
       containment: "#canvas",
       cursor: "move",
-      cursorAt: { top: 25, left: 50 },
     });
   }
 
