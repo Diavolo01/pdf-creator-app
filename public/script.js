@@ -155,50 +155,95 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function addImageUrl() {
-    if (isDrawing) return;
-    isDrawing = true;
-    const imageUrl =
-      document.getElementById("imageUrlInput")?.value ||
-      prompt("Enter image URL:");
-    const imagePattern = /\.(jpg|jpeg|png|gif|bmp)$/i;
+  if (isDrawing) return;
+  isDrawing = true;
+  const imageUrl =
+    document.getElementById("imageUrlInput")?.value ||
+    prompt("Enter image URL:");
+  const imagePattern = /\.(jpg|jpeg|png|gif|bmp)$/i;
 
-    if (imageUrl && imagePattern.test(imageUrl)) {
-      const imgContainer = createImageContainer(imageUrl);
-      canvas.appendChild(imgContainer);
-      isDrawing = false;
-    } else {
-      alert("Please enter a valid image URL.");
-      isDrawing = false;
-    }
+  if (imageUrl && imagePattern.test(imageUrl)) {
+    const imgContainer = createImageContainer(imageUrl);
+    canvas.appendChild(imgContainer);
+    isDrawing = false;
+  } else {
+    alert("Please enter a valid image URL.");
+    isDrawing = false;
   }
+}
 
-  function createImageContainer(imageUrl) {
-    const imgContainer = document.createElement("div");
-    imgContainer.classList.add("image-container");
-    imgContainer.style.position = "absolute";
-    imgContainer.style.left = "50px";
-    imgContainer.style.top = "50px";
+function createImageContainer(imageUrl) {
+  const imgContainer = document.createElement("div");
+  imgContainer.classList.add("image-container");
+  imgContainer.style.position = "absolute";
+  imgContainer.style.left = "50px";
+  imgContainer.style.top = "50px";
+  imgContainer.style.width = "150px";
+  imgContainer.style.height = "150px";
 
-    const img = document.createElement("img");
-    img.src = imageUrl;
-    img.style.width = "150px";
-    img.style.height = "150px";
+  const img = document.createElement("img");
+  
+  // Check if the image URL is from a remote source
+  if (isValidUrl(imageUrl)) {
+    convertImageToBase64(imageUrl).then((base64Image) => {
+      img.src = base64Image;  // Set the image source to Base64
+      img.style.width = "100%";
+      img.style.height = "100%";
+      img.style.display = "block";
+      img.onload = () => {
+        imgContainer.appendChild(img);
+        createResizeHandles(imgContainer);
+        makeDraggable(imgContainer);
+      };
+    }).catch((error) => {
+      alert("Failed to load image. Please check the URL.");
+      console.error(error);
+    });
+  } else {
+    img.src = imageUrl;  // Direct URL for local files
+    img.style.width = "100%";
+    img.style.height = "100%";
     img.style.display = "block";
-
     img.onload = () => {
       imgContainer.appendChild(img);
-      createResizeHandles(imgContainer, img);
+      createResizeHandles(imgContainer);
       makeDraggable(imgContainer);
     };
-
-    img.onerror = () => {
-      alert("Failed to load image. Please check the URL.");
-    };
-
-    return imgContainer;
   }
 
-  function createResizeHandles(container, img) {
+  img.onerror = () => {
+    alert("Failed to load image. Please check the URL.");
+  };
+
+  return imgContainer;
+}
+
+function isValidUrl(url) {
+  const pattern = new RegExp('^(https?|ftp)://[^\\s/$.?#].[^\\s]*$', 'i');
+  return pattern.test(url);
+}
+
+// Function to convert image URL to Base64
+function convertImageToBase64(imageUrl) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";  // To handle cross-origin images
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0);
+      const base64Image = canvas.toDataURL("image/png");  // Get the Base64 representation
+      resolve(base64Image);
+    };
+    img.onerror = reject;
+    img.src = imageUrl;
+  });
+}
+
+
+  function createResizeHandles(container) {
     const corners = ["top-left", "top-right", "bottom-left", "bottom-right"];
 
     corners.forEach((corner) => {
@@ -228,6 +273,8 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           if (corner.includes("left")) {
             newWidth = Math.max(10, startWidth - diffX);
+            // Maintain position when resizing from left
+            container.style.left = `${container.offsetLeft + (startWidth - newWidth)}px`;
           }
           if (corner.includes("bottom")) {
             newHeight = Math.min(
@@ -237,12 +284,12 @@ document.addEventListener("DOMContentLoaded", () => {
           }
           if (corner.includes("top")) {
             newHeight = Math.max(10, startHeight - diffY);
+            // Maintain position when resizing from top
+            container.style.top = `${container.offsetTop + (startHeight - newHeight)}px`;
           }
 
           container.style.width = `${newWidth}px`;
           container.style.height = `${newHeight}px`;
-          img.style.width = `${newWidth}px`;
-          img.style.height = `${newHeight}px`;
         };
 
         const stopResize = () => {
@@ -395,7 +442,9 @@ document.addEventListener("DOMContentLoaded", () => {
       .filter(item => item.id !== "templateImage")
       .map((item) => ({
         type: item.tagName.toLowerCase(),
-        src: item.tagName.toLowerCase() === "img" ? item.src : undefined,
+        src: item.tagName.toLowerCase() === "div" && item.classList.contains("image-container") 
+          ? item.querySelector("img")?.src 
+          : undefined,
         textBoxName: item.classList.contains("text-item") ? item.dataset.name : undefined,
         text: item.classList.contains("text-item") ? item.textContent : undefined,
         x: item.offsetLeft,
@@ -459,7 +508,7 @@ document.addEventListener("DOMContentLoaded", () => {
           
           // Add all items back to the canvas
           config.items.forEach((item) => {
-            if (item.type === "img") {
+            if (item.src) {
               const imgContainer = createImageContainer(item.src);
               imgContainer.style.left = `${item.x}px`;
               imgContainer.style.top = `${item.y}px`;
@@ -539,16 +588,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const width = (item.offsetWidth / canvasWidthPx) * canvasWidthMM;
       const height = (item.offsetHeight / canvasHeightPx) * canvasHeightMM;
   
-      if (item.tagName.toLowerCase() === "img") {
-        const imgCanvas = document.createElement("canvas");
-        imgCanvas.width = item.naturalWidth;
-        imgCanvas.height = item.naturalHeight;
-        const ctx = imgCanvas.getContext("2d");
-        ctx.drawImage(item, 0, 0);
-  
-        const imageData = imgCanvas.toDataURL("image/jpg");
-        doc.addImage(imageData, "JPG", x, y, width, height);
-      } else if (item.tagName.toLowerCase() === "div") {
+      if (item.classList.contains("image-container")) {
+        // Find the img inside the container
+        const img = item.querySelector("img");
+        if (img) {
+          try {
+            doc.addImage(img.src, "JPG", x, y, width, height);
+          } catch (error) {
+            console.error("Error adding image to PDF:", error);
+          }
+        }
+      } else if (item.classList.contains("text-item")) {
         // Extract text styling from the div element
         const computedStyle = window.getComputedStyle(item);
         const fontSize = parseFloat(computedStyle.fontSize) || 16;
