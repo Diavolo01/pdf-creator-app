@@ -685,13 +685,29 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
         // Set the font - must use standard jsPDF font names
         doc.setFont("helvetica", fontStyle);
         
-        // Add the text with proper styling
-        // jsPDF positioning is from the baseline of text, not the top
-        const yPos = y + height/2 + fontSizePt * 0.3;
+        // FIX: Adjust Y position calculation to match the visual position better
+        // Consider the padding from the CSS (5px) and adjust vertical alignment
+        const padding = 5 * pxToMm; // Convert padding to mm
+        const lineHeight = fontSizePt * 1.2 * pxToMm / 0.75; // Approximate line height
         
-        doc.text(item.textContent, xPos, yPos, {
+        // Calculate the Y position based on the text's vertical alignment
+        let yPos;
+        const verticalAlign = computedStyle.verticalAlign || "top";
+        
+        if (computedStyle.lineHeight === "normal") {
+          // If using default line height, position more precisely
+          yPos = y + padding + fontSizePt * 0.352778; // Convert pt to mm (1pt = 0.352778mm)
+        } else {
+          // For custom line heights, try to match the visual position
+          yPos = y + padding + fontSizePt * 0.352778;
+        }
+        
+        // Handle multi-line text by splitting it into lines and positioning each
+        const lines = doc.splitTextToSize(item.textContent, width - (padding * 2));
+        
+        doc.text(lines, xPos, yPos, {
           align: textAlign,
-          maxWidth: width
+          maxWidth: width - (padding * 2)
         });
       }
     });
