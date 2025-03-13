@@ -382,7 +382,8 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
     canvas.appendChild(textbox);
     makeDraggable(textbox);
     makeRemovable(textbox);
-    makeResizable(textbox);
+    //makeResizable(textbox);
+    createResizeHandles(textbox, () => (isResizing = true), () => (isResizing = false));
     updatePropertiesPanel(textbox);
   }
 
@@ -440,26 +441,37 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
   });
 
   function updateTextboxProperties() {
-      const textboxId = document.getElementById("textboxId").textContent;
-      if (!textboxId) return;
+    const textboxId = document.getElementById("textboxId").textContent;
+    if (!textboxId) return;
 
-      const textbox = document.getElementById(textboxId);
-      if (!textbox) return;
+    const textbox = document.getElementById(textboxId);
+    if (!textbox) return;
 
-      const textboxName = document.getElementById("textboxName").value.trim();
-      if (textboxName) {
-          textbox.dataset.name = textboxName;
-          textbox.name = textboxName;
-      }
+    const textboxName = document.getElementById("textboxName").value.trim();
+    if (textboxName) {
+        textbox.dataset.name = textboxName;
+        textbox.name = textboxName;
+    }
 
-      textbox.style.fontSize = document.getElementById("fontSize").value + "px";
-      textbox.textContent = document.getElementById("textContent").value;
-      textbox.style.left = document.getElementById("posX").value + "px";
-      textbox.style.top = document.getElementById("posY").value + "px";
+    textbox.style.fontSize = document.getElementById("fontSize").value + "px";
+    textbox.textContent = document.getElementById("textContent").value;
+    textbox.style.left = document.getElementById("posX").value + "px";
+    textbox.style.top = document.getElementById("posY").value + "px";
 
-      $(textbox).resizable("destroy");
-      makeResizable(textbox);
-  }
+    // Remove existing resize handles (if any)
+    textbox.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+    
+    // Add new resize handles
+    createResizeHandles(textbox, () => (isResizing = true), () => (isResizing = false));
+    
+    // If you also want jQuery resizable, uncomment these lines
+    /*
+    if ($(textbox).hasClass("ui-resizable")) {
+        $(textbox).resizable("destroy");
+    }
+    makeResizable(textbox);
+    */
+}
 
   function exportConfig() {
     // Get template image info (if exists)

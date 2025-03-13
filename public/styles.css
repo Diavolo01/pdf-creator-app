@@ -82,3 +82,7 @@ body {
     bottom: 0;
     overflow-y: auto;
 }
+* {
+    -webkit-user-select: none;
+    user-select: none;
+}
