@@ -453,21 +453,22 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
         textbox.name = textboxName;
     }
 
-    const fontSize = document.getElementById("fontSize").value + "px";
-    textbox.style.fontSize = fontSize;
+    const fontSize = parseInt(document.getElementById("fontSize").value);
+    textbox.style.fontSize = fontSize + "px";
     textbox.textContent = document.getElementById("textContent").value;
-    textbox.style.left = document.getElementById("posX").value + "px";
-    textbox.style.top = document.getElementById("posY").value + "px";
 
-    // Allowing the browser to recalculate dimensions before updating width and height
+    // Store previous size and position
+    const prevLeft = textbox.offsetLeft;
+    const prevTop = textbox.offsetTop;
+
     requestAnimationFrame(() => {
-      //const sizingScale = 1; 
-      textbox.style.width = (textbox.scrollWidth * sizingScale) + "px";
-      textbox.style.height = (textbox.scrollHeight * sizingScale) + "px";
-  });
+        textbox.style.left = prevLeft - deltaX + "px";
+        textbox.style.top = prevTop - deltaY + "px";
+    });
 
-  createResizeHandles(textbox, () => (isResizing = true), () => (isResizing = false));
+    createResizeHandles(textbox, () => (isResizing = true), () => (isResizing = false));
 }
+
 
   function exportConfig() {
     // Get template image info (if exists)
