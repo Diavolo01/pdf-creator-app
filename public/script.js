@@ -597,121 +597,90 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
 
   function createPdf() {
     const { jsPDF } = window.jspdf;
-  
+
     // Get canvas dimensions in pixels
     const canvasWidthPx = parseFloat(canvas.style.width);
     const canvasHeightPx = parseFloat(canvas.style.height);
-    
-    // Convert pixels to mm for PDF (assuming 96 DPI)
+
+    // Convert pixels to millimeters (assuming 96 DPI)
     const pxToMm = 0.264583333;
     const canvasWidthMM = canvasWidthPx * pxToMm;
     const canvasHeightMM = canvasHeightPx * pxToMm;
-  
+
+    // Create a PDF document with the same dimensions as the canvas
     const doc = new jsPDF({
-      orientation: canvasWidthMM > canvasHeightMM ? "landscape" : "portrait",
-      unit: "mm",
-      format: [canvasWidthMM, canvasHeightMM],
+        orientation: canvasWidthMM > canvasHeightMM ? "landscape" : "portrait",
+        unit: "mm",
+        format: [canvasWidthMM, canvasHeightMM]
     });
-  
+
+    // Add the background template image (if available)
     const templateImg = document.getElementById("templateImage");
     if (templateImg) {
-      doc.addImage(
-        templateImg.src,
-        "JPEG",
-        0,
-        0,
-        canvasWidthMM,
-        canvasHeightMM
-      );
+        doc.addImage(templateImg.src, "JPEG", 0, 0, canvasWidthMM, canvasHeightMM);
     }
-  
+
+    // Loop through each child element in the canvas
     Array.from(canvas.children).forEach((item) => {
-      if (item.id === "templateImage") return;
-  
-      // Calculate positions and dimensions in mm
-      const x = (item.offsetLeft / canvasWidthPx) * canvasWidthMM;
-      const y = (item.offsetTop / canvasHeightPx) * canvasHeightMM;
-      const width = (item.offsetWidth / canvasWidthPx) * canvasWidthMM;
-      const height = (item.offsetHeight / canvasHeightPx) * canvasHeightMM;
-  
-      if (item.classList.contains("image-container")) {
-        // Find the img inside the container
-        const img = item.querySelector("img");
-        if (img) {
-          try {
-            doc.addImage(img.src, "JPG", x, y, width, height);
-          } catch (error) {
-            console.error("Error adding image to PDF:", error);
-          }
+        if (item.id === "templateImage") return; // Skip the template image
+
+        // Convert element's position and size to millimeters
+        const x = (item.offsetLeft / canvasWidthPx) * canvasWidthMM;
+        const y = (item.offsetTop / canvasHeightPx) * canvasHeightMM;
+        const width = (item.offsetWidth / canvasWidthPx) * canvasWidthMM;
+        const height = (item.offsetHeight / canvasHeightPx) * canvasHeightMM;
+
+        if (item.classList.contains("image-container")) {
+            // Add image elements to the PDF
+            const img = item.querySelector("img");
+            if (img) {
+                try {
+                    doc.addImage(img.src, "JPG", x, y, width, height);
+                } catch (error) {
+                    console.error("Error adding image to PDF:", error);
+                }
+            }
+        } else if (item.classList.contains("text-item")) {
+            // Handle text elements
+            const computedStyle = window.getComputedStyle(item);
+            const fontSizePx = parseFloat(computedStyle.fontSize) || 16;
+            const fontSizePt = fontSizePx * 0.75; // Convert px to pt
+
+            doc.setFontSize(fontSizePt);
+            doc.setTextColor(computedStyle.color || "#000000");
+
+            // Determine text alignment
+            let textAlign = computedStyle.textAlign || "left";
+            if (!["left", "center", "right", "justify"].includes(textAlign)) {
+                textAlign = "left";
+            }
+
+            // Calculate text position based on alignment
+            let xPos = x;
+            if (textAlign === "center") xPos = x + width / 2;
+            else if (textAlign === "right") xPos = x + width;
+
+            // Handle font style
+            let fontStyle = "normal";
+            if (computedStyle.fontWeight >= 700 && computedStyle.fontStyle === "italic") fontStyle = "bolditalic";
+            else if (computedStyle.fontWeight >= 700) fontStyle = "bold";
+            else if (computedStyle.fontStyle === "italic") fontStyle = "italic";
+            
+            doc.setFont("helvetica", fontStyle);
+
+            // Adjust Y position to align text properly
+            const padding = 5 * pxToMm;
+            const lineHeight = fontSizePt * 1.2 * pxToMm / 0.75;
+            let yPos = y + padding + fontSizePt * 0.352778;
+
+            // Handle multi-line text
+            const lines = doc.splitTextToSize(item.textContent, width - (padding * 2));
+            doc.text(lines, xPos, yPos, { align: textAlign, maxWidth: width - (padding * 2) });
         }
-      } else if (item.classList.contains("text-item")) {
-        // Extract text styling from the div element
-        const computedStyle = window.getComputedStyle(item);
-        const fontSize = parseFloat(computedStyle.fontSize) || 16;
-        
-        // Convert font size from px to pt for PDF (1pt ≈ 0.75px)
-        const fontSizePt = fontSize * 0.75;
-        
-        // Set font properties
-        doc.setFontSize(fontSizePt);
-        doc.setTextColor(computedStyle.color || "#000000");
-        
-        // Get text alignment
-        let textAlign = computedStyle.textAlign || "left";
-        
-        // Ensure textAlign is one of the allowed values
-        if (!["left", "center", "right", "justify"].includes(textAlign)) {
-          textAlign = "left"; // Default to left if invalid
-        }
-        
-        // Handle text alignment
-        let xPos = x;
-        if (textAlign === "center") {
-          xPos = x + width/2;
-        } else if (textAlign === "right") {
-          xPos = x + width;
-        }
-        
-        // Handle font style 
-        let fontStyle = "normal";
-        if (computedStyle.fontWeight >= 700 && computedStyle.fontStyle === "italic") {
-          fontStyle = "bolditalic";
-        } else if (computedStyle.fontWeight >= 700) {
-          fontStyle = "bold";
-        } else if (computedStyle.fontStyle === "italic") {
-          fontStyle = "italic";
-        }
-        
-        // Set the font - must use standard jsPDF font names
-        doc.setFont("helvetica", fontStyle);
-        
-        // FIX: Adjust Y position calculation to match the visual position better
-        // Consider the padding from the CSS (5px) and adjust vertical alignment
-        const padding = 5 * pxToMm; // Convert padding to mm
-        const lineHeight = fontSizePt * 1.2 * pxToMm / 0.75; // Approximate line height
-        
-        // Calculate the Y position based on the text's vertical alignment
-        let yPos;
-        const verticalAlign = computedStyle.verticalAlign || "top";
-        
-        if (computedStyle.lineHeight === "normal") {
-          // If using default line height, position more precisely
-          yPos = y + padding + fontSizePt * 0.352778; // Convert pt to mm (1pt = 0.352778mm)
-        } else {
-          // For custom line heights, try to match the visual position
-          yPos = y + padding + fontSizePt * 0.352778;
-        }
-        
-        // Handle multi-line text by splitting it into lines and positioning each
-        const lines = doc.splitTextToSize(item.textContent, width - (padding * 2));
-        
-        doc.text(lines, xPos, yPos, {
-          align: textAlign,
-          maxWidth: width - (padding * 2)
-        });
-      }
     });
-  
+
+    // Save the PDF file
     doc.save("layout.pdf");
-  }
+}
+
 });
