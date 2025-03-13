@@ -462,8 +462,8 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
     const prevTop = textbox.offsetTop;
 
     requestAnimationFrame(() => {
-        textbox.style.left = prevLeft - deltaX + "px";
-        textbox.style.top = prevTop - deltaY + "px";
+        textbox.style.left = prevLeft + "px";
+        textbox.style.top = prevTop + "px";
     });
 
     createResizeHandles(textbox, () => (isResizing = true), () => (isResizing = false));
@@ -670,7 +670,6 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
 
             // Adjust Y position to align text properly
             const padding = 5 * pxToMm;
-            const lineHeight = fontSizePt * 1.2 * pxToMm / 0.75;
             let yPos = y + padding + fontSizePt * 0.352778;
 
             // Handle multi-line text
