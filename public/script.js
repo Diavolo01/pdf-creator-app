@@ -394,11 +394,11 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
     });
   }
 
-  function makeResizable(element) {
-    $(element).resizable({
-      containment: "#canvas",
-    });
-  }
+  // function makeResizable(element) {
+  //   $(element).resizable({
+  //     containment: "#canvas",
+  //   });
+  // }
 
   function makeRemovable(element) {
     element.addEventListener("dblclick", () => {
@@ -453,24 +453,20 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
         textbox.name = textboxName;
     }
 
-    textbox.style.fontSize = document.getElementById("fontSize").value + "px";
+    const fontSize = document.getElementById("fontSize").value + "px";
+    textbox.style.fontSize = fontSize;
     textbox.textContent = document.getElementById("textContent").value;
     textbox.style.left = document.getElementById("posX").value + "px";
     textbox.style.top = document.getElementById("posY").value + "px";
 
-    // Remove existing resize handles (if any)
-    textbox.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
-    
-    // Add new resize handles
-    createResizeHandles(textbox, () => (isResizing = true), () => (isResizing = false));
-    
-    // If you also want jQuery resizable, uncomment these lines
-    /*
-    if ($(textbox).hasClass("ui-resizable")) {
-        $(textbox).resizable("destroy");
-    }
-    makeResizable(textbox);
-    */
+    // Allowing the browser to recalculate dimensions before updating width and height
+    requestAnimationFrame(() => {
+      //const sizingScale = 1; 
+      textbox.style.width = (textbox.scrollWidth * sizingScale) + "px";
+      textbox.style.height = (textbox.scrollHeight * sizingScale) + "px";
+  });
+
+  createResizeHandles(textbox, () => (isResizing = true), () => (isResizing = false));
 }
 
   function exportConfig() {
