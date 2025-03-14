@@ -71,7 +71,7 @@ body {
 .resize-handle.bottom-right { bottom: -5px; right: -5px; cursor: nwse-resize; }
 
 #textboxProperties {
-    width: 300px;
+    width: 20%;
     background-color: #fff;
     padding: 15px;
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
