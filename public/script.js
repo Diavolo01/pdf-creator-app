@@ -18,6 +18,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentPdf = null;
   let currentPage = 1;
   let totalPages = 1;
+  
+  // Store the PDFLib document
+  let pdfLibDoc = null;
+  let originalPdfArrayBuffer = null;
 
   addImageUrlButton.addEventListener("click", addImageUrl);
   exportConfigButton.addEventListener("click", exportConfig);
@@ -30,12 +34,99 @@ document.addEventListener("DOMContentLoaded", () => {
   prevPageButton.addEventListener("click", showPreviousPage);
   nextPageButton.addEventListener("click", showNextPage);
 
+  // Function to convert hex color to RGB
+  function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+      r: parseInt(result[1], 16) / 255,
+      g: parseInt(result[2], 16) / 255,
+      b: parseInt(result[3], 16) / 255
+    } : { r: 0, g: 0, b: 0 };
+  }
+
   function addTemplate() {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/jpg, application/pdf, image/png, image/jpeg";
     input.addEventListener("change", handleTemplateChange);
     input.click();
+  }
+
+  async function handleTemplateChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+      
+    const reader = new FileReader();
+        
+    reader.onload = async (e) => {
+      let templateImg = document.getElementById("templateImage");
+      if (!templateImg) {
+        templateImg = document.createElement("img");
+        templateImg.id = "templateImage";
+        templateImg.style.position = "absolute";
+        templateImg.style.top = "0";
+        templateImg.style.left = "0";
+        templateImg.style.zIndex = "-1";
+        canvas.appendChild(templateImg);
+      }
+        
+      if (file.type === "application/pdf") {
+        // Store the original PDF array buffer for later use
+        originalPdfArrayBuffer = e.target.result;
+        
+        // Load the PDF using PDF.js for preview
+        const pdfData = new Uint8Array(e.target.result);
+        currentPdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+              
+        // Load the PDF using PDF-Lib for manipulation
+        pdfLibDoc = await PDFLib.PDFDocument.load(pdfData);
+              
+        // Get the total number of pages
+        totalPages = currentPdf.numPages;
+        currentPage = 1;
+              
+        // Show PDF controls
+        pdfControls.style.display = "block";
+        updatePageInfo();
+              
+        // Render the first page and adjust the canvas size
+        await renderPdfPage(currentPage);
+      } else {
+        // For image files
+        const img = new Image();
+        img.onload = async () => {
+          // Adjust canvas size based on image dimensions
+          canvas.style.width = img.width + 'px';
+          canvas.style.height = img.height + 'px';
+                  
+          templateImg.src = e.target.result;
+          
+          // Create a new PDF document from the image
+          pdfLibDoc = await PDFLib.PDFDocument.create();
+          const pngImage = await pdfLibDoc.embedPng(new Uint8Array(e.target.result));
+          const page = pdfLibDoc.addPage([img.width, img.height]);
+          page.drawImage(pngImage, {
+            x: 0,
+            y: 0,
+            width: img.width,
+            height: img.height
+          });
+          
+          // Reset PDF navigation
+          currentPdf = null;
+          totalPages = 1;
+          currentPage = 1;
+          pdfControls.style.display = "none";
+        };
+        img.src = e.target.result;
+      }
+    };
+      
+    if (file.type === "application/pdf") {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsArrayBuffer(file);
+    }
   }
 
   async function renderPdfPage(pageNumber) {
@@ -76,61 +167,6 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error rendering PDF page:", error);
     }
   }
-  
-  // For image files in handleTemplateChange function, ensure consistent sizing approach
-  async function handleTemplateChange(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-      
-    const reader = new FileReader();
-        
-    reader.onload = async (e) => {
-      let templateImg = document.getElementById("templateImage");
-      if (!templateImg) {
-        templateImg = document.createElement("img");
-        templateImg.id = "templateImage";
-        templateImg.style.position = "absolute";
-        templateImg.style.top = "0";
-        templateImg.style.left = "0";
-        templateImg.style.zIndex = "-1";
-        canvas.appendChild(templateImg);
-      }
-        
-      if (file.type === "application/pdf") {
-        const pdfData = new Uint8Array(e.target.result);
-        // Store the PDF for later use with navigation
-        currentPdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
-              
-        // Get the total number of pages
-        totalPages = currentPdf.numPages;
-        currentPage = 1;
-              
-        // Show PDF controls
-        pdfControls.style.display = "block";
-        updatePageInfo();
-              
-        // Render the first page and adjust the canvas size
-        await renderPdfPage(currentPage);
-      } else {
-        // For image files
-        const img = new Image();
-        img.onload = () => {
-          // Adjust canvas size based on image dimensions
-          canvas.style.width = img.width + 'px';
-          canvas.style.height = img.height + 'px';
-                  
-          templateImg.src = e.target.result;
-        };
-        img.src = e.target.result;
-      }
-    };
-      
-    if (file.type === "application/pdf") {
-      reader.readAsArrayBuffer(file);
-    } else {
-      reader.readAsDataURL(file);
-    }
-  }
 
   function updatePageInfo() {
     pageInfoSpan.textContent = `Page ${currentPage} of ${totalPages}`;
@@ -140,53 +176,67 @@ document.addEventListener("DOMContentLoaded", () => {
     nextPageButton.disabled = currentPage >= totalPages;
   }
 
-  function showPreviousPage() {
+  async function showPreviousPage() {
     if (currentPage > 1) {
       currentPage--;
-      renderPdfPage(currentPage);
+      await renderPdfPage(currentPage);
     }
   }
 
-  function showNextPage() {
+  async function showNextPage() {
     if (currentPage < totalPages) {
       currentPage++;
-      renderPdfPage(currentPage);
+      await renderPdfPage(currentPage);
     }
   }
 
   function addImageUrl() {
-  if (isDrawing) return;
-  isDrawing = true;
-  const imageUrl =
-    document.getElementById("imageUrlInput")?.value ||
-    prompt("Enter image URL:");
-  const imagePattern = /\.(jpg|jpeg|png|gif|bmp)$/i;
+    if (isDrawing) return;
+    isDrawing = true;
+    const imageUrl =
+      document.getElementById("imageUrlInput")?.value ||
+      prompt("Enter image URL:");
+    const imagePattern = /\.(jpg|jpeg|png|gif|bmp)$/i;
 
-  if (imageUrl && imagePattern.test(imageUrl)) {
-    const imgContainer = createImageContainer(imageUrl);
-    canvas.appendChild(imgContainer);
-    isDrawing = false;
-  } else {
-    alert("Please enter a valid image URL.");
-    isDrawing = false;
+    if (imageUrl && imagePattern.test(imageUrl)) {
+      const imgContainer = createImageContainer(imageUrl);
+      canvas.appendChild(imgContainer);
+      isDrawing = false;
+    } else {
+      alert("Please enter a valid image URL.");
+      isDrawing = false;
+    }
   }
-}
 
-function createImageContainer(imageUrl) {
-  const imgContainer = document.createElement("div");
-  imgContainer.classList.add("image-container");
-  imgContainer.style.position = "absolute";
-  imgContainer.style.left = "50px";
-  imgContainer.style.top = "50px";
-  imgContainer.style.width = "150px";
-  imgContainer.style.height = "150px";
+  function createImageContainer(imageUrl) {
+    const imgContainer = document.createElement("div");
+    imgContainer.classList.add("image-container");
+    imgContainer.style.position = "absolute";
+    imgContainer.style.left = "50px";
+    imgContainer.style.top = "50px";
+    imgContainer.style.width = "150px";
+    imgContainer.style.height = "150px";
 
-  const img = document.createElement("img");
-  
-  // Check if the image URL is from a remote source
-  if (isValidUrl(imageUrl)) {
-    convertImageToBase64(imageUrl).then((base64Image) => {
-      img.src = base64Image;  // Set the image source to Base64
+    const img = document.createElement("img");
+    
+    // Check if the image URL is from a remote source
+    if (isValidUrl(imageUrl)) {
+      convertImageToBase64(imageUrl).then((base64Image) => {
+        img.src = base64Image;  // Set the image source to Base64
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.display = "block";
+        img.onload = () => {
+          imgContainer.appendChild(img);
+          createResizeHandles(imgContainer);
+          makeDraggable(imgContainer);
+        };
+      }).catch((error) => {
+        alert("Failed to load image. Please check the URL.");
+        console.error(error);
+      });
+    } else {
+      img.src = imageUrl;  // Direct URL for local files
       img.style.width = "100%";
       img.style.height = "100%";
       img.style.display = "block";
@@ -195,151 +245,136 @@ function createImageContainer(imageUrl) {
         createResizeHandles(imgContainer);
         makeDraggable(imgContainer);
       };
-    }).catch((error) => {
+    }
+
+    img.onerror = () => {
       alert("Failed to load image. Please check the URL.");
-      console.error(error);
-    });
-  } else {
-    img.src = imageUrl;  // Direct URL for local files
-    img.style.width = "100%";
-    img.style.height = "100%";
-    img.style.display = "block";
-    img.onload = () => {
-      imgContainer.appendChild(img);
-      createResizeHandles(imgContainer);
-      makeDraggable(imgContainer);
     };
+
+    return imgContainer;
   }
 
-  img.onerror = () => {
-    alert("Failed to load image. Please check the URL.");
-  };
+  function isValidUrl(url) {
+    const pattern = new RegExp('^(https?|ftp)://[^\\s/$.?#].[^\\s]*$', 'i');
+    return pattern.test(url);
+  }
 
-  return imgContainer;
-}
-
-function isValidUrl(url) {
-  const pattern = new RegExp('^(https?|ftp)://[^\\s/$.?#].[^\\s]*$', 'i');
-  return pattern.test(url);
-}
-
-// Function to convert image URL to Base64
-function convertImageToBase64(imageUrl) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = "Anonymous";  // To handle cross-origin images
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(img, 0, 0);
-      const base64Image = canvas.toDataURL("image/png");  // Get the Base64 representation
-      resolve(base64Image);
-    };
-    img.onerror = reject;
-    img.src = imageUrl;
-  });
-}
-
-
-function makeDraggable(container) {
-  let isResizing = false;
-
-  container.addEventListener("mousedown", (e) => {
-    if (e.target.classList.contains("resize-handle")) return; // Prevent moving while resizing
-
-    e.preventDefault();
-    let startX = e.clientX;
-    let startY = e.clientY;
-    let startLeft = container.offsetLeft;
-    let startTop = container.offsetTop;
-
-    const move = (e) => {
-      if (isResizing) return; // Stop movement while resizing
-
-      let newLeft = startLeft + (e.clientX - startX);
-      let newTop = startTop + (e.clientY - startY);
-      container.style.left = `${newLeft}px`;
-      container.style.top = `${newTop}px`;
-    };
-
-    const stopMove = () => {
-      document.removeEventListener("mousemove", move);
-      document.removeEventListener("mouseup", stopMove);
-    };
-
-    document.addEventListener("mousemove", move);
-    document.addEventListener("mouseup", stopMove);
-  });
-
-  // Pass actual function references for starting and stopping resize
-  createResizeHandles(container, () => (isResizing = true), () => (isResizing = false));
-}
-
-function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = () => {}) {
-  const corners = ["top-left", "top-right", "bottom-left", "bottom-right"];
-
-  corners.forEach((corner) => {
-    const handle = document.createElement("div");
-    handle.classList.add("resize-handle", corner);
-    container.appendChild(handle);
-
-    handle.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      e.stopPropagation(); // Prevent triggering container drag event
-
-      onResizeStart(); // Mark resizing as active
-
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const startWidth = container.offsetWidth;
-      const startHeight = container.offsetHeight;
-      const startLeft = container.offsetLeft;
-      const startTop = container.offsetTop;
-
-      const resize = (e) => {
-        const diffX = e.clientX - startX;
-        const diffY = e.clientY - startY;
-
-        let newWidth = startWidth;
-        let newHeight = startHeight;
-        let newLeft = startLeft;
-        let newTop = startTop;
-
-        if (corner.includes("right")) {
-          newWidth = startWidth + diffX;
-        }
-        if (corner.includes("left")) {
-          newWidth = startWidth - diffX;
-          newLeft = startLeft + diffX;
-        }
-        if (corner.includes("bottom")) {
-          newHeight = startHeight + diffY;
-        }
-        if (corner.includes("top")) {
-          newHeight = startHeight - diffY;
-          newTop = startTop + diffY;
-        }
-
-        container.style.width = `${Math.max(10, newWidth)}px`;
-        container.style.height = `${Math.max(10, newHeight)}px`;
-
-        if (corner.includes("left")) container.style.left = `${newLeft}px`;
-        if (corner.includes("top")) container.style.top = `${newTop}px`;
+  // Function to convert image URL to Base64
+  function convertImageToBase64(imageUrl) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "Anonymous";  // To handle cross-origin images
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const base64Image = canvas.toDataURL("image/png");  // Get the Base64 representation
+        resolve(base64Image);
       };
-
-      const stopResize = () => {
-        onResizeEnd(); // Mark resizing as inactive
-        document.removeEventListener("mousemove", resize);
-        document.removeEventListener("mouseup", stopResize);
-      };
-
-      document.addEventListener("mousemove", resize);
-      document.addEventListener("mouseup", stopResize);
+      img.onerror = reject;
+      img.src = imageUrl;
     });
-  });
-}
+  }
+
+  function makeDraggable(container) {
+    let isResizing = false;
+
+    container.addEventListener("mousedown", (e) => {
+      if (e.target.classList.contains("resize-handle")) return; // Prevent moving while resizing
+
+      e.preventDefault();
+      let startX = e.clientX;
+      let startY = e.clientY;
+      let startLeft = container.offsetLeft;
+      let startTop = container.offsetTop;
+
+      const move = (e) => {
+        if (isResizing) return; // Stop movement while resizing
+
+        let newLeft = startLeft + (e.clientX - startX);
+        let newTop = startTop + (e.clientY - startY);
+        container.style.left = `${newLeft}px`;
+        container.style.top = `${newTop}px`;
+      };
+
+      const stopMove = () => {
+        document.removeEventListener("mousemove", move);
+        document.removeEventListener("mouseup", stopMove);
+      };
+
+      document.addEventListener("mousemove", move);
+      document.addEventListener("mouseup", stopMove);
+    });
+
+    // Pass actual function references for starting and stopping resize
+    createResizeHandles(container, () => (isResizing = true), () => (isResizing = false));
+  }
+
+  function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = () => {}) {
+    const corners = ["top-left", "top-right", "bottom-left", "bottom-right"];
+
+    corners.forEach((corner) => {
+      const handle = document.createElement("div");
+      handle.classList.add("resize-handle", corner);
+      container.appendChild(handle);
+
+      handle.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        e.stopPropagation(); // Prevent triggering container drag event
+
+        onResizeStart(); // Mark resizing as active
+
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startWidth = container.offsetWidth;
+        const startHeight = container.offsetHeight;
+        const startLeft = container.offsetLeft;
+        const startTop = container.offsetTop;
+
+        const resize = (e) => {
+          const diffX = e.clientX - startX;
+          const diffY = e.clientY - startY;
+
+          let newWidth = startWidth;
+          let newHeight = startHeight;
+          let newLeft = startLeft;
+          let newTop = startTop;
+
+          if (corner.includes("right")) {
+            newWidth = startWidth + diffX;
+          }
+          if (corner.includes("left")) {
+            newWidth = startWidth - diffX;
+            newLeft = startLeft + diffX;
+          }
+          if (corner.includes("bottom")) {
+            newHeight = startHeight + diffY;
+          }
+          if (corner.includes("top")) {
+            newHeight = startHeight - diffY;
+            newTop = startTop + diffY;
+          }
+
+          container.style.width = `${Math.max(10, newWidth)}px`;
+          container.style.height = `${Math.max(10, newHeight)}px`;
+
+          if (corner.includes("left")) container.style.left = `${newLeft}px`;
+          if (corner.includes("top")) container.style.top = `${newTop}px`;
+        };
+
+        const stopResize = () => {
+          onResizeEnd(); // Mark resizing as inactive
+          document.removeEventListener("mousemove", resize);
+          document.removeEventListener("mouseup", stopResize);
+        };
+
+        document.addEventListener("mousemove", resize);
+        document.addEventListener("mouseup", stopResize);
+      });
+    });
+  }
 
   function startDrawing() {
     isDrawing = true;
@@ -376,13 +411,10 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
     textbox.style.position = "absolute";
     textbox.style.left = `${x}px`;
     textbox.style.top = `${y}px`;
-    // textbox.style.width = "100px";
-    // textbox.style.height = "15px";
 
     canvas.appendChild(textbox);
     makeDraggable(textbox);
     makeRemovable(textbox);
-    //makeResizable(textbox);
     createResizeHandles(textbox, () => (isResizing = true), () => (isResizing = false));
     updatePropertiesPanel(textbox);
   }
@@ -393,12 +425,6 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
       cursor: "move",
     });
   }
-
-  // function makeResizable(element) {
-  //   $(element).resizable({
-  //     containment: "#canvas",
-  //   });
-  // }
 
   function makeRemovable(element) {
     element.addEventListener("dblclick", () => {
@@ -467,8 +493,7 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
     });
 
     createResizeHandles(textbox, () => (isResizing = true), () => (isResizing = false));
-}
-
+  }
 
   function exportConfig() {
     // Get template image info (if exists)
@@ -594,92 +619,130 @@ function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = 
       reader.readAsText(file);
     }
   }
+  async function embedFont(doc) {
+    // Embed a standard font
+    return await doc.embedFont(PDFLib.StandardFonts.Helvetica);
+  }
 
-  function createPdf() {
-    const { jsPDF } = window.jspdf;
-
-    // Get canvas dimensions in pixels
-    const canvasWidthPx = parseFloat(canvas.style.width);
-    const canvasHeightPx = parseFloat(canvas.style.height);
-
-    // Convert pixels to millimeters (assuming 96 DPI)
-    const pxToMm = 0.264583333;
-    const canvasWidthMM = canvasWidthPx * pxToMm;
-    const canvasHeightMM = canvasHeightPx * pxToMm;
-
-    // Create a PDF document with the same dimensions as the canvas
-    const doc = new jsPDF({
-        orientation: canvasWidthMM > canvasHeightMM ? "landscape" : "portrait",
-        unit: "mm",
-        format: [canvasWidthMM, canvasHeightMM]
-    });
-
-    // Add the background template image (if available)
-    const templateImg = document.getElementById("templateImage");
-    if (templateImg) {
-        doc.addImage(templateImg.src, "JPEG", 0, 0, canvasWidthMM, canvasHeightMM);
+  async function createPdf() {
+    // If no PDFLib document is available, create one
+    if (!pdfLibDoc) {
+      // Create a new PDF document with the same dimensions as the canvas
+      const canvasWidth = parseFloat(canvas.style.width);
+      const canvasHeight = parseFloat(canvas.style.height);
+      pdfLibDoc = await PDFLib.PDFDocument.create();
+      pdfLibDoc.addPage([canvasWidth, canvasHeight]);
+    }
+    
+    // If we have a multi-page PDF, work with the current page only
+    let workingPdfDoc;
+    if (currentPdf && totalPages > 1) {
+      // Create a new PDF with just the current page
+      workingPdfDoc = await PDFLib.PDFDocument.create();
+      const [copiedPage] = await workingPdfDoc.copyPages(pdfLibDoc, [currentPage - 1]);
+      workingPdfDoc.addPage(copiedPage);
+    } else {
+      workingPdfDoc = pdfLibDoc;
     }
 
-    // Loop through each child element in the canvas
-    Array.from(canvas.children).forEach((item) => {
-        if (item.id === "templateImage") return; // Skip the template image
+    // Get the page we're working with
+    const pages = workingPdfDoc.getPages();
+    const page = pages[0];
+    const { width, height } = page.getSize();
 
-        // Convert element's position and size to millimeters
-        const x = (item.offsetLeft / canvasWidthPx) * canvasWidthMM;
-        const y = (item.offsetTop / canvasHeightPx) * canvasHeightMM;
-        const width = (item.offsetWidth / canvasWidthPx) * canvasWidthMM;
-        const height = (item.offsetHeight / canvasHeightPx) * canvasHeightMM;
-
-        if (item.classList.contains("image-container")) {
-            // Add image elements to the PDF
-            const img = item.querySelector("img");
-            if (img) {
-                try {
-                    doc.addImage(img.src, "JPG", x, y, width, height);
-                } catch (error) {
-                    console.error("Error adding image to PDF:", error);
-                }
-            }
-        } else if (item.classList.contains("text-item")) {
-            // Handle text elements
-            const computedStyle = window.getComputedStyle(item);
-            const fontSizePx = parseFloat(computedStyle.fontSize) || 16;
-            const fontSizePt = fontSizePx * 0.75; // Convert px to pt
-
-            doc.setFontSize(fontSizePt);
-            doc.setTextColor(computedStyle.color || "#000000");
-
-            // Determine text alignment
-            let textAlign = computedStyle.textAlign || "left";
-            if (!["left", "center", "right", "justify"].includes(textAlign)) {
-                textAlign = "left";
-            }
-
-            // Calculate text position based on alignment
-            let xPos = x;
-            if (textAlign === "center") xPos = x + width / 2;
-            else if (textAlign === "right") xPos = x + width;
-
-            // Handle font style
-            let fontStyle = "normal";
-            if (computedStyle.fontWeight >= 700 && computedStyle.fontStyle === "italic") fontStyle = "bolditalic";
-            else if (computedStyle.fontWeight >= 700) fontStyle = "bold";
-            else if (computedStyle.fontStyle === "italic") fontStyle = "italic";
-            
-            doc.setFont("helvetica", fontStyle);
-
-            // Adjust Y position to align text properly
-            const padding = 5 * pxToMm;
-            let yPos = y + padding + fontSizePt * 0.352778;
-
-            // Handle multi-line text
-            const lines = doc.splitTextToSize(item.textContent, width - (padding * 2));
-            doc.text(lines, xPos, yPos, { align: textAlign, maxWidth: width - (padding * 2) });
+    // Process all elements on the canvas
+    const items = Array.from(canvas.children).filter(item => item.id !== "templateImage");
+    
+    // Add images first (to be in the background)
+   // For images
+for (const item of items) {
+  if (item.classList.contains("image-container")) {
+    const img = item.querySelector("img");
+    if (img) {
+      try {
+        // Get canvas dimensions
+        const canvasWidth = parseFloat(canvas.style.width) || canvas.offsetWidth;
+        const canvasHeight = parseFloat(canvas.style.height) || canvas.offsetHeight;
+        
+        // Calculate scale factor between canvas and PDF
+        const scaleX = width / canvasWidth;
+        const scaleY = height / canvasHeight;
+        
+        // Scale the coordinates and dimensions
+        const x = item.offsetLeft * scaleX;
+        const y = height - (item.offsetTop * scaleY) - (item.offsetHeight * scaleY);
+        const imageWidth = item.offsetWidth * scaleX;
+        const imageHeight = item.offsetHeight * scaleY;
+        
+        console.log("Image position:", x, y);
+        console.log("Image dimensions:", imageWidth, imageHeight);
+        
+        // Embed the image
+        let embeddedImage;
+        if (img.src.startsWith('data:image/png;base64,')) {
+          const base64Data = img.src.split(',')[1];
+          embeddedImage = await workingPdfDoc.embedPng(base64Data);
+        } else if (img.src.startsWith('data:image/jpeg;base64,')) {
+          const base64Data = img.src.split(',')[1];
+          embeddedImage = await workingPdfDoc.embedJpg(base64Data);
+        } else {
+          console.warn("Unsupported image format:", img.src);
+          continue;
         }
-    });
-
-    // Save the PDF file
-    doc.save("layout.pdf");
+        
+        // Draw the image on the page with scaled dimensions
+        page.drawImage(embeddedImage, {
+          x: Math.min(x, width - 10),
+          y: Math.max(Math.min(y, height - 10), 10),
+          width: Math.min(imageWidth, width - x - 10),
+          height: Math.min(imageHeight, y - 10)
+        });
+      } catch (error) {
+        console.error("Error adding image to PDF:", error);
+      }
+    }
+  }
 }
-
+    const font = await embedFont(workingPdfDoc);
+    for (const item of items) {
+      if (item.classList.contains("text-item")) {
+        // Get text styles
+        const computedStyle = window.getComputedStyle(item);
+        const fontSize = parseFloat(computedStyle.fontSize) || 16;
+        const fontColor = computedStyle.color || "#000000";
+        const { r, g, b } = hexToRgb(fontColor);
+        const canvasWidth = parseFloat(canvas.style.width) || canvas.offsetWidth;
+        const canvasHeight = parseFloat(canvas.style.height) || canvas.offsetHeight;
+        // Calculate scale factor between canvas and PDF
+        const scaleX = width / canvasWidth;
+        const scaleY = height / canvasHeight;
+        
+        // Scale the coordinates
+        const x = item.offsetLeft * scaleX;
+        const y = height - (item.offsetTop * scaleY) - (item.offsetHeight * scaleY);
+        
+        console.log("Text content:", item.textContent);
+        console.log("Scaled Position:", x, y);
+        console.log("Page dimensions:", width, height);
+        
+        // Add text to PDF with scaled coordinates
+        page.drawText(item.textContent, {
+          x: Math.min(x, width - 10),
+          y: Math.max(Math.min(y, height - 10), 10),
+          size: fontSize * Math.min(scaleX, scaleY),
+          font: font,
+          color: PDFLib.rgb(r/255, g/255, b/255)
+        });
+      }
+    }
+    // Save the PDF
+    const pdfBytes = await workingPdfDoc.save();
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "layout.pdf";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 });
