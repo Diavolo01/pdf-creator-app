@@ -716,10 +716,10 @@ for (const item of items) {
         // Calculate scale factor between canvas and PDF
         const scaleX = width / canvasWidth;
         const scaleY = height / canvasHeight;
-        
+        const fixedOffset = 10 * scaleY;
         // Scale the coordinates
         const x = item.offsetLeft * scaleX;
-        const y = height - (item.offsetTop * scaleY) - (item.offsetHeight * scaleY);
+        const y = height - (item.offsetTop * scaleY) - (item.offsetHeight * scaleY)+ fixedOffset;
         
         console.log("Text content:", item.textContent);
         console.log("Scaled Position:", x, y);

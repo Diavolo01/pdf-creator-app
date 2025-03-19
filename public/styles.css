@@ -86,3 +86,6 @@ body {
     -webkit-user-select: none;
     user-select: none;
 }
+.selected-item {
+    outline: 2px solid #0066ff;
+  }
