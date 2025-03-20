@@ -588,6 +588,7 @@ document.addEventListener("DOMContentLoaded", () => {
     canvas.appendChild(textbox);
     makeDraggable(textbox);
     makeRemovable(textbox);
+    // makeResizable(textbox);
     createResizeHandles(
       textbox,
       () => (isResizing = true),
@@ -615,6 +616,12 @@ document.addEventListener("DOMContentLoaded", () => {
       cursor: "move",
     });
   }
+  //just incase
+  // function makeResizable(element) {
+  //   $(element).resizable({
+  //     containment: "#canvas",
+  //     handles: "ne, se, sw, nw",
+  //   })}
 
   function makeRemovable(element) {
     document.addEventListener("keydown", (e) => {
