@@ -22,6 +22,7 @@ body {
     align-items: flex-start; /* Align to top to avoid centering issues */
     justify-content: center;
     margin-right: 350px;
+   
 }
 
 #canvas {
@@ -87,5 +88,5 @@ body {
     user-select: none;
 }
 .selected-item {
-    outline: 2px solid #0066ff;
-  }
+    outline: 2px solid #0066ff; 
+}

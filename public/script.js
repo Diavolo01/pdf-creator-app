@@ -25,11 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
   let pdfLibDoc = null;
   let originalPdfArrayBuffer = null;
 
-  const clipboard = {
-    item: null,
-    type: null,
-  };
-
   addImageUrlButton.addEventListener("click", addImageUrl);
   exportConfigButton.addEventListener("click", exportConfig);
   importConfigButton.addEventListener("click", () => importFileInput.click());
@@ -43,6 +38,122 @@ document.addEventListener("DOMContentLoaded", () => {
   copyButton.addEventListener("click", copySelectedItem);
   pasteButton.addEventListener("click", pasteItem);
 
+
+  const selectionBox = document.createElement("div");
+  selectionBox.id = "selection-box";
+  selectionBox.style.position = "absolute";
+  selectionBox.style.border = "1px dashed #0066ff";
+  selectionBox.style.backgroundColor = "rgba(0, 102, 255, 0.1)";
+  selectionBox.style.pointerEvents = "none"; // This prevents the box from interfering with clicks
+  selectionBox.style.display = "none";
+  canvas.appendChild(selectionBox);
+  
+  // // Variables to track selection box
+  let isSelecting = false;
+  let startX, startY;
+  
+  // // Add mouse events for selection box
+  canvas.addEventListener("mousedown", (e) => {
+    // Only start selection if it's a direct click on the canvas (not on an item)
+    if (e.target === canvas) {
+      isSelecting = true;
+      startX = e.clientX - canvas.getBoundingClientRect().left;
+      startY = e.clientY - canvas.getBoundingClientRect().top;
+      
+      // Initialize selection box
+      selectionBox.style.left = startX + "px";
+      selectionBox.style.top = startY + "px";
+      selectionBox.style.width = "0px";
+      selectionBox.style.height = "0px";
+      selectionBox.style.display = "block";
+    }
+  });
+  
+  canvas.addEventListener("mousemove", (e) => {
+    if (!isSelecting) return;
+    
+    const currentX = e.clientX - canvas.getBoundingClientRect().left;
+    const currentY = e.clientY - canvas.getBoundingClientRect().top;
+    
+    // Calculate the selection box dimensions
+    const width = Math.abs(currentX - startX);
+    const height = Math.abs(currentY - startY);
+    
+    // Set the selection box position and size
+    selectionBox.style.left = Math.min(startX, currentX) + "px";
+    selectionBox.style.top = Math.min(startY, currentY) + "px";
+    selectionBox.style.width = width + "px";
+    selectionBox.style.height = height + "px";
+  });
+  
+  canvas.addEventListener("mouseup", () => {
+    if (!isSelecting) return;
+    
+    // Get the selection box boundaries
+    const boxLeft = parseInt(selectionBox.style.left);
+    const boxTop = parseInt(selectionBox.style.top);
+    const boxRight = boxLeft + parseInt(selectionBox.style.width);
+    const boxBottom = boxTop + parseInt(selectionBox.style.height);
+    
+    // Find all items that are within the selection box
+    const items = Array.from(canvas.children).filter(item => {
+      if (item === selectionBox || item.id === "templateImage") return false;
+      
+      const itemLeft = item.offsetLeft;
+      const itemTop = item.offsetTop;
+      const itemRight = itemLeft + item.offsetWidth;
+      const itemBottom = itemTop + item.offsetHeight;
+      
+      // Check if the item intersects with the selection box
+      return (
+        itemLeft < boxRight &&
+        itemRight > boxLeft &&
+        itemTop < boxBottom &&
+        itemBottom > boxTop
+      );
+    });
+      items.forEach((item) => {
+        item.classList.add("selected-item");
+        selectItem(item, true);
+        console.log(item)
+        console.log(isSelecting)
+      });
+    
+    
+    // Hide the selection box
+    selectionBox.style.display = "none";
+    isSelecting = false;
+    // If any items were selected, update the properties panel for the first one
+    if (items.length > 0 && items[0].classList.contains("text-item")) {
+      updatePropertiesPanel(items[0]);
+    }
+  });
+  
+  // Cancel selection if mouse leaves the canvas
+  canvas.addEventListener("mouseleave", () => {
+    if (isSelecting) {
+      selectionBox.style.display = "none";
+      isSelecting = false;
+    }
+  });
+  
+  // Modify the existing canvas click event to account for the selection box
+  canvas.removeEventListener("click", handleCanvasClick);
+  canvas.addEventListener("click", (e) => {
+    if (isDrawing) {
+      handleCanvasClick(e);
+      return;
+    }
+    
+  //   // If clicked directly on canvas (not during a selection)
+    if (e.target === canvas && !isSelecting) {
+      // Click on empty canvas to clear all selections
+      document.querySelectorAll(".selected-item").forEach((item) => {
+        item.classList.remove("selected-item");
+        item.style.outline = "none";
+      });
+    }
+  });
   // Function to convert hex color to RGB
   function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -202,154 +313,134 @@ document.addEventListener("DOMContentLoaded", () => {
       await renderPdfPage(currentPage);
     }
   }
-  function copySelectedItem() {
-    // Find the currently selected item
-    const selectedItem = document.querySelector(".selected-item");
+  let clipboard = { type: null, items: [] }; // Store copied items
 
-    if (!selectedItem) {
-      alert("Please select an item to copy.");
-      return;
-    }
+function copySelectedItem() {
+    clipboard.items = []; // Clear clipboard
 
-    if (selectedItem.classList.contains("text-item")) {
-      // Copy text item
-      clipboard.type = "text";
-      clipboard.item = {
-        content: selectedItem.textContent,
-        fontSize: selectedItem.style.fontSize,
-        fontColor: selectedItem.style.color,
-        textAlign: selectedItem.style.textAlign,
-        width: selectedItem.offsetWidth,
-        height: selectedItem.offsetHeight,
-        name: selectedItem.dataset.name,
-      };
-    } else if (selectedItem.classList.contains("image-container")) {
-      // Copy image item
-      const img = selectedItem.querySelector("img");
-      if (!img) return;
+    document.querySelectorAll(".selected-item").forEach((selectedItem) => {
+        let copiedData = null;
 
-      clipboard.type = "image";
-      clipboard.item = {
-        src: img.src,
-        width: selectedItem.offsetWidth,
-        height: selectedItem.offsetHeight,
-      };
-    }
+        if (selectedItem.classList.contains("text-item")) {
+            // Copy text item
+            copiedData = {
+                type: "text",
+                content: selectedItem.textContent,
+                fontSize: selectedItem.style.fontSize,
+                fontColor: selectedItem.style.color,
+                textAlign: selectedItem.style.textAlign,
+                width: selectedItem.offsetWidth,
+                height: selectedItem.offsetHeight,
+                name: selectedItem.dataset.name,
+                left: selectedItem.offsetLeft,
+                top: selectedItem.offsetTop,
+            };
+        } else if (selectedItem.classList.contains("image-container")) {
+            // Copy image item
+            const img = selectedItem.querySelector("img");
+            if (!img) return;
 
-    // Provide feedback to the user
-    console.log("Item copied to clipboard!");
-  }
+            copiedData = {
+                type: "image",
+                src: img.src,
+                width: selectedItem.offsetWidth,
+                height: selectedItem.offsetHeight,
+                left: selectedItem.offsetLeft,
+                top: selectedItem.offsetTop,
+            };
+        }
 
-  // Function to paste the copied item
-  function pasteItem() {
-    if (!clipboard.item) {
-      console.log("Nothing to paste!");
-      return;
-    }
-
-    // Calculate position offset for the pasted item
-    const offsetX = 20;
-    const offsetY = 20;
-
-    if (clipboard.type === "text") {
-      // Find the last selected text item to get its position
-      const lastSelected =
-        document.querySelector(".selected-item") ||
-        document.querySelector(".text-item");
-
-      let x = offsetX;
-      let y = offsetY;
-
-      if (lastSelected) {
-        x = lastSelected.offsetLeft + offsetX;
-        y = lastSelected.offsetTop + offsetY;
-      }
-
-      // Create new textbox with the copied content and properties
-      const newTextbox = createTextbox(
-        x,
-        y,
-        clipboard.item.content,
-        clipboard.item.name + "-copy"
-      );
-
-      // Set the textbox properties
-      newTextbox.style.fontSize = clipboard.item.fontSize;
-      newTextbox.style.color = clipboard.item.fontColor;
-      newTextbox.style.textAlign = clipboard.item.textAlign;
-      newTextbox.style.width = clipboard.item.width + "px";
-      newTextbox.style.height = clipboard.item.height + "px";
-
-      // Select the new textbox
-      selectItem(newTextbox);
-    } else if (clipboard.type === "image") {
-      // Find the last selected image to get its position
-      const lastSelected =
-        document.querySelector(".selected-item") ||
-        document.querySelector(".image-container");
-
-      let x = offsetX;
-      let y = offsetY;
-
-      if (lastSelected) {
-        x = lastSelected.offsetLeft + offsetX;
-        y = lastSelected.offsetTop + offsetY;
-      }
-
-      // Create new image with the copied properties
-      const imgContainer = createImageContainer(clipboard.item.src);
-      imgContainer.style.left = x + "px";
-      imgContainer.style.top = y + "px";
-      imgContainer.style.width = clipboard.item.width + "px";
-      imgContainer.style.height = clipboard.item.height + "px";
-
-      canvas.appendChild(imgContainer);
-
-      // Select the new image container
-      selectItem(imgContainer);
-    }
-  }
-
-  // Function to select an item
-  function selectItem(element) {
-    // Remove selection from all items
-    document.querySelectorAll(".selected-item").forEach((item) => {
-      item.classList.remove("selected-item");
-      item.style.outline = "none";
+        if (copiedData) clipboard.items.push(copiedData);
     });
 
-    // Add selection to the clicked item
-    element.classList.add("selected-item");
-    element.style.outline = "2px solid #0066ff";
+    clipboard.type = clipboard.items.length > 0 ? clipboard.items[0].type : null;
 
-    // Update properties panel if needed
-    if (element.classList.contains("text-item")) {
-      updatePropertiesPanel(element);
+    if (clipboard.items.length > 0) {
+        console.log(`${clipboard.items.length} item(s) copied!`);
+    } else {
+        alert("Please select at least one item to copy.");
     }
-  }
-  canvas.addEventListener("click", (e) => {
-    // If the click is directly on the canvas, deselect all items
-    if (e.target === canvas) {
+}
+
+// Function to paste the copied items
+function pasteItem() {
+    if (clipboard.items.length === 0) {
+        console.log("Nothing to paste!");
+        return;
+    }
+
+    const offsetStep = 20; // Offset each pasted item to avoid overlap
+
+    clipboard.items.forEach((copiedItem, index) => {
+        let newElement = null;
+        let x = copiedItem.left + offsetStep * (index + 1);
+        let y = copiedItem.top + offsetStep * (index + 1);
+
+        if (copiedItem.type === "text") {
+            // Create new textbox
+            newElement = createTextbox(x, y, copiedItem.content, copiedItem.name + "-copy");
+
+            // Apply copied styles
+            newElement.style.fontSize = copiedItem.fontSize;
+            newElement.style.color = copiedItem.fontColor;
+            newElement.style.textAlign = copiedItem.textAlign;
+            newElement.style.width = copiedItem.width + "px";
+            newElement.style.height = copiedItem.height;
+        } else if (copiedItem.type === "image") {
+            // Create new image container
+            newElement = createImageContainer(copiedItem.src);
+            newElement.style.left = x + "px";
+            newElement.style.top = y + "px";
+            newElement.style.width = copiedItem.width + "px";
+            newElement.style.height = copiedItem.height + "px";
+
+            canvas.appendChild(newElement);
+        }
+
+        if (newElement) {
+            selectItem(newElement, true); // Keep newly pasted items selected
+        }
+    });
+
+    console.log(`${clipboard.items.length} item(s) pasted!`);
+}
+
+function selectItem(element, multiSelect = false) {
+  if (!multiSelect) {
+      // Remove selection from all items if multiSelect is not enabled
       document.querySelectorAll(".selected-item").forEach((item) => {
-        item.classList.remove("selected-item");
-        item.style.outline = "none";
+          item.classList.add("selected-item");
       });
-    }
-  });
+  }
 
-  // Add keyboard shortcuts for copy-paste
-  document.addEventListener("keydown", (e) => {
-    // Check if Ctrl+C is pressed (Cmd+C on Mac)
-    if ((e.ctrlKey || e.metaKey) && e.key === "c") {
-      copySelectedItem();
-    }
+  // Toggle selection: If already selected, remove it
+  if (element.classList.contains("selected-item") && multiSelect) {
+      element.classList.remove("selected-item");
+      element.style.outline = "none";
+  } else {
+      element.classList.add("selected-item");
+      element.style.outline = "2px solid #0066ff";
+  }
 
-    // Check if Ctrl+V is pressed (Cmd+V on Mac)
-    if ((e.ctrlKey || e.metaKey) && e.key === "v") {
-      pasteItem();
-    }
-  });
+  // Update properties panel for text items
+  if (element.classList.contains("text-item")) {
+      updatePropertiesPanel(element);
+  }
+}
 
+// Add keyboard shortcuts for copy-paste
+document.addEventListener("keydown", (e) => {
+  // Check if Ctrl+C is pressed (Cmd+C on Mac)
+  if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+    copySelectedItem();
+  }
+
+  // Check if Ctrl+V is pressed (Cmd+V on Mac)
+  if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+    pasteItem();
+  }
+});
+  
   function addImageUrl() {
     if (isDrawing) return;
     isDrawing = true;
@@ -588,6 +679,7 @@ document.addEventListener("DOMContentLoaded", () => {
     canvas.appendChild(textbox);
     makeDraggable(textbox);
     makeRemovable(textbox);
+    //makeSelectable(textbox);
     // makeResizable(textbox);
     createResizeHandles(
       textbox,
@@ -622,6 +714,10 @@ document.addEventListener("DOMContentLoaded", () => {
   //     containment: "#canvas",
   //     handles: "ne, se, sw, nw",
   //   })}
+
+  function makeSelectable(element) {
+    $(element).selectable();
+  }
 
   function makeRemovable(element) {
     document.addEventListener("keydown", (e) => {
