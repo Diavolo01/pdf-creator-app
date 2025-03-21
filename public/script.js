@@ -84,6 +84,8 @@ document.addEventListener("DOMContentLoaded", () => {
     selectionBox.style.top = Math.min(startY, currentY) + "px";
     selectionBox.style.width = width + "px";
     selectionBox.style.height = height + "px";
+
+    
   });
   
   canvas.addEventListener("mouseup", () => {
@@ -417,7 +419,7 @@ function selectItem(element, multiSelect = false) {
   if (element.classList.contains("selected-item") && multiSelect) {
       element.classList.remove("selected-item");
       element.style.outline = "none";
-  } else {
+  } else {  
       element.classList.add("selected-item");
       element.style.outline = "2px solid #0066ff";
   }
@@ -440,6 +442,94 @@ document.addEventListener("keydown", (e) => {
     pasteItem();
   }
 });
+
+function enableGroupMovement() {
+  let isDraggingGroup = false;
+  let lastX, lastY;
+
+  document.addEventListener("mousedown", (e) => {
+    const target = e.target;
+    
+    // Check if the target or its parent is a selected item
+    const selectedElement = target.classList.contains("selected-item") ? 
+      target : target.closest(".selected-item");
+    
+    if (selectedElement && document.querySelectorAll(".selected-item").length > 1) {
+      isDraggingGroup = true;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+  document.addEventListener("mousemove", (e) => {
+    if (!isDraggingGroup) return;
+    
+    const diffX = e.clientX - lastX;
+    const diffY = e.clientY - lastY;
+    
+    document.querySelectorAll(".selected-item").forEach((item) => {
+      const currentLeft = parseInt(item.style.left) || item.offsetLeft;
+      const currentTop = parseInt(item.style.top) || item.offsetTop;
+      
+      item.style.left = (currentLeft + diffX) + "px";
+      item.style.top = (currentTop + diffY) + "px";
+    });
+    
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  document.addEventListener("mouseup", () => {
+    isDraggingGroup = false;
+  });
+}
+
+// Add keyboard arrow key movement for selected items
+function enableKeyboardMovement() {
+  document.addEventListener("keydown", (e) => {
+    // Only if we have selected items and not editing text
+    if (document.activeElement.contentEditable !== "true" && 
+        document.querySelectorAll(".selected-item").length > 0) {
+      
+      const step = e.shiftKey ? 10 : 1; // Larger movement with Shift key
+      let deltaX = 0;
+      let deltaY = 0;
+      
+      switch (e.key) {
+        case "ArrowUp":
+          deltaY = -step;
+          break;
+        case "ArrowDown":
+          deltaY = step;
+          break;
+        case "ArrowLeft":
+          deltaX = -step;
+          break;
+        case "ArrowRight":
+          deltaX = step;
+          break;
+        default:
+          return; // Exit if not an arrow key
+      }
+      
+      // Prevent scrolling the page
+      e.preventDefault();
+      
+      // Move all selected items
+      document.querySelectorAll(".selected-item").forEach((item) => {
+        const currentLeft = parseInt(item.style.left) || item.offsetLeft;
+        const currentTop = parseInt(item.style.top) || item.offsetTop;
+        
+        item.style.left = (currentLeft + deltaX) + "px";
+        item.style.top = (currentTop + deltaY) + "px";
+      });
+    }
+  });
+}
+enableGroupMovement();
+enableKeyboardMovement();
   
   function addImageUrl() {
     if (isDrawing) return;
