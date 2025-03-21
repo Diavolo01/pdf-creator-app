@@ -152,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
       // Click on empty canvas to clear all selections
       document.querySelectorAll(".selected-item").forEach((item) => {
         item.classList.remove("selected-item");
-        item.style.outline = "none";
+        item.style.outline = "1px solid #000";
       });
     }
   });
