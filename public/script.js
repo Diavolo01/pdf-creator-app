@@ -152,10 +152,15 @@ document.addEventListener("DOMContentLoaded", () => {
       // Click on empty canvas to clear all selections
       document.querySelectorAll(".selected-item").forEach((item) => {
         item.classList.remove("selected-item");
+        removeResizeHandles(item);
         item.style.outline = "1px solid #000";
       });
     }
   });
+  function removeResizeHandles(element) {
+    const handles = element.querySelectorAll(".resize-handle");
+    handles.forEach(handle => handle.remove());
+}
   // Function to convert hex color to RGB
   function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -418,7 +423,8 @@ function selectItem(element, multiSelect = false) {
   // Toggle selection: If already selected, remove it
   if (element.classList.contains("selected-item") && multiSelect) {
       element.classList.remove("selected-item");
-      element.style.outline = "none";
+      element.style.outline = "1px solid #000";
+
   } else {  
       element.classList.add("selected-item");
       element.style.outline = "2px solid #0066ff";
@@ -771,15 +777,20 @@ enableKeyboardMovement();
     makeRemovable(textbox);
     //makeSelectable(textbox);
     // makeResizable(textbox);
-    createResizeHandles(
-      textbox,
-      () => (isResizing = true),
-      () => (isResizing = false)
-    );
+    // createResizeHandles(
+    //   textbox,
+    //   () => (isResizing = true),
+    //   () => (isResizing = false)
+    // );
     updatePropertiesPanel(textbox);
     textbox.addEventListener("click", (e) => {
       e.stopPropagation();
       selectItem(textbox);
+      createResizeHandles(
+        textbox,
+        () => (isResizing = true),
+        () => (isResizing = false)
+      );
     });
     textbox.addEventListener("dblclick", (e) => {
       e.stopPropagation();
