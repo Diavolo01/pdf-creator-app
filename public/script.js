@@ -332,7 +332,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
 function copySelectedItem() {
     clipboard.items = []; // Clear clipboard
-
+    pasteCount = 1;
     document.querySelectorAll(".selected-item").forEach((selectedItem) => {
         let copiedData = null;
 
@@ -378,23 +378,25 @@ function copySelectedItem() {
 }
 
 // Function to paste the copied items
+let pasteCount = 1; // Track how many times items have been pasted
+
 function pasteItem() {
     if (clipboard.items.length === 0) {
         console.log("Nothing to paste!");
         return;
     }
 
-    const offsetStep = 20; // Offset each pasted item to avoid overlap
+    const OffsetStep = 30; // Vertical offset for each paste action
 
-    clipboard.items.forEach((copiedItem, index) => {
+    clipboard.items.forEach((copiedItem) => {
         let newElement = null;
-        let x = copiedItem.left + offsetStep * (index + 1);
-        let y = copiedItem.top + offsetStep * (index + 1);
+        let x = copiedItem.left; // Keep the same x position
+        let y = copiedItem.top + OffsetStep * pasteCount ; // Offset y downward
 
         if (copiedItem.type === "text") {
             // Create new textbox
-            newElement = createTextbox(x, y, copiedItem.content, copiedItem.name + "-copy");
-
+            newElement = createTextbox(x, y, copiedItem.content, copiedItem.name);
+            console.log(pasteCount);
             // Apply copied styles
             newElement.style.fontSize = copiedItem.fontSize;
             newElement.style.color = copiedItem.fontColor;
@@ -417,6 +419,7 @@ function pasteItem() {
         }
     });
 
+    pasteCount++; // Increase the paste count to move items further down
     console.log(`${clipboard.items.length} item(s) pasted!`);
 }
 
