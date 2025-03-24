@@ -435,7 +435,7 @@ function selectItem(element) {
 
   } else {  
       element.classList.add("selected-item");
-      element.style.outline = "2px solid #0066ff";
+      //element.style.outline = "2px solid #0066ff";
   }
 
   // Update properties panel for text items
