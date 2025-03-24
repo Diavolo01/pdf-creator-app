@@ -150,9 +150,13 @@ document.addEventListener("DOMContentLoaded", () => {
       handleCanvasClick(e);
       return;
     }
+    if (e.target.classList.contains("text-item")) {
+      selectItem(e.target);
+      e.stopPropagation();
+    }
     
   //   // If clicked directly on canvas (not during a selection)
-    if (e.target === canvas && !isSelecting) {
+    else if (e.target === canvas && !isSelecting) {
       // Click on empty canvas to clear all selections
       document.querySelectorAll(".selected-item").forEach((item) => {
         item.classList.remove("selected-item");
@@ -787,9 +791,10 @@ enableKeyboardMovement();
     //   () => (isResizing = false)
     // );
     updatePropertiesPanel(textbox);
+  
     textbox.addEventListener("click", (e) => {
       e.stopPropagation();
-      //selectItem(textbox);
+      selectItem(textbox);
       document.querySelectorAll(".selected-item").forEach(item => {
         item.classList.remove("selected-item");
       });
