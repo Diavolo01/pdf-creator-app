@@ -121,6 +121,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log(isSelecting)
       });
       if(items.length > 0){
+        document.querySelectorAll(".resize-handle").forEach(handle => handle.remove());
         isSelecting = true;
       }else{
         isSelecting = false;
@@ -786,34 +787,20 @@ enableKeyboardMovement();
     //   () => (isResizing = false)
     // );
     updatePropertiesPanel(textbox);
-    
-    function clearSelection() {
-      // Remove selection class from all elements
+    textbox.addEventListener("click", (e) => {
+      e.stopPropagation();
+      //selectItem(textbox);
       document.querySelectorAll(".selected-item").forEach(item => {
         item.classList.remove("selected-item");
       });
-    
-      // Remove all resize handles
       document.querySelectorAll(".resize-handle").forEach(handle => handle.remove());
-    }
-    
-    textbox.addEventListener("click", (e) => {
-      e.stopPropagation();
-    
-      // Clear previous selection and remove resize handles
-      clearSelection();
-    
-      // Mark the clicked textbox as selected
       textbox.classList.add("selected-item");
-    
-      // Create new resize handles for the selected textbox
       createResizeHandles(
         textbox,
         () => (isResizing = true),
         () => (isResizing = false)
       );
     });
-    
     textbox.addEventListener("dblclick", (e) => {
       e.stopPropagation();
       textbox.contentEditable = true;
