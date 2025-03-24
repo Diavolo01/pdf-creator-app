@@ -47,6 +47,23 @@
       <label>Position Y: <input id="posY" type="number"></label>
       <br><br>
       <p>Type: <span id="type">Textbox</span></p>
+      <p>Number: <span id="number">Loading...</span></p>
+
+      <script>
+        // Extract ID from the URL
+        const pathParts = window.location.pathname.split("/");
+        if (pathParts[1] === "edit" && pathParts[2]) {
+            const id = pathParts[2];
+            document.addEventListener("DOMContentLoaded", function () {
+          fetch(`/edit/${id}/data`)
+              .then(response => response.json())
+              .then(data => {
+                  document.getElementById("number").textContent = data.number;
+              })
+              .catch(error => console.error("Error fetching data:", error));
+      });
+        }
+    </script>
   </div>
   
       
