@@ -89,5 +89,5 @@ body {
     user-select: none;
 }
 .selected-item {
-    outline: 2px solid #0066ff;
+    outline: 2px solid #0066ff!important;
 }

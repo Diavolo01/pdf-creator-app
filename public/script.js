@@ -120,11 +120,14 @@ document.addEventListener("DOMContentLoaded", () => {
         console.log(item)
         console.log(isSelecting)
       });
-    
+      if(items.length > 0){
+        isSelecting = true;
+      }else{
+        isSelecting = false;
+      }
     
     // Hide the selection box
     selectionBox.style.display = "none";
-    isSelecting = false;
     // If any items were selected, update the properties panel for the first one
     if (items.length > 0 && items[0].classList.contains("text-item")) {
       updatePropertiesPanel(items[0]);
@@ -412,17 +415,17 @@ function pasteItem() {
     console.log(`${clipboard.items.length} item(s) pasted!`);
 }
 
-function selectItem(element, multiSelect = false) {
-  if (!multiSelect) {
-      // Remove selection from all items if multiSelect is not enabled
-      document.querySelectorAll(".selected-item").forEach((item) => {
-          item.classList.add("selected-item");
-      });
-  }
+function selectItem(element) {
+  // if (!multiSelect) {
+  //     // Remove selection from all items if multiSelect is not enabled
+  //     document.querySelectorAll(".selected-item").forEach((item) => {
+  //         item.classList.add("selected-item");
+  //     });
+  // }
 
   // Toggle selection: If already selected, remove it
-  if (element.classList.contains("selected-item") && multiSelect) {
-      element.classList.remove("selected-item");
+  if (element.classList.contains("selected-item") ) {
+      //element.classList.remove("selected-item");
       element.style.outline = "1px solid #000";
 
   } else {  
@@ -662,11 +665,11 @@ enableKeyboardMovement();
     });
 
     // Pass actual function references for starting and stopping resize
-    createResizeHandles(
-      container,
-      () => (isResizing = true),
-      () => (isResizing = false)
-    );
+    // createResizeHandles(
+    //   container,
+    //   () => (isResizing = true),
+    //   () => (isResizing = false)
+    // );
   }
 
   function createResizeHandles(
@@ -783,15 +786,34 @@ enableKeyboardMovement();
     //   () => (isResizing = false)
     // );
     updatePropertiesPanel(textbox);
+    
+    function clearSelection() {
+      // Remove selection class from all elements
+      document.querySelectorAll(".selected-item").forEach(item => {
+        item.classList.remove("selected-item");
+      });
+    
+      // Remove all resize handles
+      document.querySelectorAll(".resize-handle").forEach(handle => handle.remove());
+    }
+    
     textbox.addEventListener("click", (e) => {
       e.stopPropagation();
-      selectItem(textbox);
+    
+      // Clear previous selection and remove resize handles
+      clearSelection();
+    
+      // Mark the clicked textbox as selected
+      textbox.classList.add("selected-item");
+    
+      // Create new resize handles for the selected textbox
       createResizeHandles(
         textbox,
         () => (isResizing = true),
         () => (isResizing = false)
       );
     });
+    
     textbox.addEventListener("dblclick", (e) => {
       e.stopPropagation();
       textbox.contentEditable = true;
