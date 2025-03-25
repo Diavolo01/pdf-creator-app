@@ -329,10 +329,14 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   let clipboard = { type: null, items: [] }; // Store copied items
+let pasteCount = 1; // Track how many times items have been pasted
+let lastPastedBottom = 0; // Store the last pasted element’s bottom position
 
 function copySelectedItem() {
     clipboard.items = []; // Clear clipboard
     pasteCount = 1;
+    lastPastedBottom = 0; // Reset position tracking
+
     document.querySelectorAll(".selected-item").forEach((selectedItem) => {
         let copiedData = null;
 
@@ -372,13 +376,11 @@ function copySelectedItem() {
 
     if (clipboard.items.length > 0) {
         console.log(`${clipboard.items.length} item(s) copied!`);
+        lastPastedBottom = Math.max(...clipboard.items.map(item => item.top + item.height)); // Store the bottom of the last copied item
     } else {
         alert("Please select at least one item to copy.");
     }
 }
-
-// Function to paste the copied items
-let pasteCount = 1; // Track how many times items have been pasted
 
 function pasteItem() {
     if (clipboard.items.length === 0) {
@@ -386,23 +388,27 @@ function pasteItem() {
         return;
     }
 
-    const OffsetStep = 30; // Vertical offset for each paste action
+    const MinOffset = 15; // Minimum space between pastes
+    let firstPaste = pasteCount === 1; // Check if it's the first paste
 
     clipboard.items.forEach((copiedItem) => {
         let newElement = null;
-        let x = copiedItem.left; // Keep the same x position
-        let y = copiedItem.top + OffsetStep * pasteCount ; // Offset y downward
+        let x = copiedItem.left; // Maintain the same x position
+        let y = firstPaste 
+            ? copiedItem.top + copiedItem.height + MinOffset // Move it below the copied one
+            : lastPastedBottom + MinOffset; // Stack below the last pasted item
 
         if (copiedItem.type === "text") {
             // Create new textbox
             newElement = createTextbox(x, y, copiedItem.content, copiedItem.name);
             console.log(pasteCount);
+
             // Apply copied styles
             newElement.style.fontSize = copiedItem.fontSize;
             newElement.style.color = copiedItem.fontColor;
             newElement.style.textAlign = copiedItem.textAlign;
-            newElement.style.width = copiedItem.width + "px";
-            newElement.style.height = copiedItem.height;
+            newElement.style.width = copiedItem.width -10+ "px";
+            newElement.style.height = copiedItem.height -10+ "px";
         } else if (copiedItem.type === "image") {
             // Create new image container
             newElement = createImageContainer(copiedItem.src);
@@ -416,10 +422,11 @@ function pasteItem() {
 
         if (newElement) {
             selectItem(newElement, true); // Keep newly pasted items selected
+            lastPastedBottom = y + newElement.offsetHeight; // Update last pasted position
         }
     });
 
-    pasteCount++; // Increase the paste count to move items further down
+    pasteCount++; // Track paste count
     console.log(`${clipboard.items.length} item(s) pasted!`);
 }
 
