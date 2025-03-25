@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentPdf = null;
   let currentPage = 1;
   let totalPages = 1;
-
+  let currentDrawMode = null; 
   // Store the PDFLib document
   let pdfLibDoc = null;
   let originalPdfArrayBuffer = null;
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
   nextPageButton.addEventListener("click", showNextPage);
   copyButton.addEventListener("click", copySelectedItem);
   pasteButton.addEventListener("click", pasteItem);
-  drawHRline.addEventListener("click",createHr);
+  drawHRline.addEventListener("click", startDrawHr);
 
   const selectionBox = document.createElement("div");
   selectionBox.id = "selection-box";
@@ -767,6 +767,7 @@ enableKeyboardMovement();
 
   function startDrawing() {
     isDrawing = true;
+    currentDrawMode = 'textbox'; 
   }
 
   function handleCanvasClick(event) {
@@ -977,8 +978,9 @@ enableKeyboardMovement();
   }
   
   // Modify the startDrawing and handleCanvasClick functions to support HR creation
-  function startDrawing() {
+  function startDrawHr() {
     isDrawing = true;
+    currentDrawMode = 'hr';
   }
   
   function handleCanvasClick(event) {
@@ -988,13 +990,19 @@ enableKeyboardMovement();
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
   
-    // Create HR line at clicked position
-    createHr(mouseX, mouseY);
+    if (currentDrawMode === 'textbox') {
+      const textContent = prompt("Enter the content for the textbox:");
+      if (textContent) {
+        createTextbox(mouseX, mouseY, textContent);
+      }
+    } else if (currentDrawMode === 'hr') {
+      createHr(mouseX, mouseY);
+    }
     
-    // Reset drawing mode
     isDrawing = false;
+    currentDrawMode = null; // Reset drawing mode
   }
-
+  
   function exportConfig() {
     // Get template image info (if exists)
     const templateImg = document.getElementById("templateImage");
