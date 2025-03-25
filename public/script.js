@@ -38,7 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
   copyButton.addEventListener("click", copySelectedItem);
   pasteButton.addEventListener("click", pasteItem);
 
-
   const selectionBox = document.createElement("div");
   selectionBox.id = "selection-box";
   selectionBox.style.position = "absolute";
@@ -168,6 +167,29 @@ document.addEventListener("DOMContentLoaded", () => {
   function removeResizeHandles(element) {
     const handles = element.querySelectorAll(".resize-handle");
     handles.forEach(handle => handle.remove());
+}
+function setupImageContainerInteractions(imgContainer) {
+  makeDraggable(imgContainer);
+
+  imgContainer.addEventListener("click", (e) => {
+    e.stopPropagation();
+    
+    // Remove selection from all other items
+    document.querySelectorAll(".selected-item").forEach(item => {
+      item.classList.remove("selected-item");
+    });
+    
+    // Remove existing resize handles
+    document.querySelectorAll(".resize-handle").forEach(handle => handle.remove());
+    
+    // Add selection and resize handles to this image container
+    imgContainer.classList.add("selected-item");
+    createResizeHandles(
+      imgContainer,
+      () => (isResizing = true),
+      () => (isResizing = false)
+    );
+  });
 }
   // Function to convert hex color to RGB
   function hexToRgb(hex) {
@@ -431,13 +453,6 @@ function pasteItem() {
 }
 
 function selectItem(element) {
-  // if (!multiSelect) {
-  //     // Remove selection from all items if multiSelect is not enabled
-  //     document.querySelectorAll(".selected-item").forEach((item) => {
-  //         item.classList.add("selected-item");
-  //     });
-  // }
-
   // Toggle selection: If already selected, remove it
   if (element.classList.contains("selected-item") ) {
       //element.classList.remove("selected-item");
@@ -581,9 +596,9 @@ enableKeyboardMovement();
     imgContainer.style.top = "50px";
     imgContainer.style.width = "150px";
     imgContainer.style.height = "150px";
-
+  
     const img = document.createElement("img");
-
+  
     // Check if the image URL is from a remote source
     if (isValidUrl(imageUrl)) {
       convertImageToBase64(imageUrl)
@@ -594,8 +609,7 @@ enableKeyboardMovement();
           img.style.display = "block";
           img.onload = () => {
             imgContainer.appendChild(img);
-            createResizeHandles(imgContainer);
-            makeDraggable(imgContainer);
+            setupImageContainerInteractions(imgContainer);
           };
         })
         .catch((error) => {
@@ -609,22 +623,16 @@ enableKeyboardMovement();
       img.style.display = "block";
       img.onload = () => {
         imgContainer.appendChild(img);
-        createResizeHandles(imgContainer);
-        makeDraggable(imgContainer);
-        imgContainer.addEventListener("click", (e) => {
-          e.stopPropagation();
-          selectItem(imgContainer);
-        });
+        setupImageContainerInteractions(imgContainer);
       };
     }
-
+  
     img.onerror = () => {
       alert("Failed to load image. Please check the URL.");
     };
-
+  
     return imgContainer;
   }
-
   function isValidUrl(url) {
     const pattern = new RegExp("^(https?|ftp)://[^\\s/$.?#].[^\\s]*$", "i");
     return pattern.test(url);
@@ -922,6 +930,7 @@ enableKeyboardMovement();
       () => (isResizing = true),
       () => (isResizing = false)
     );
+    
   }
 
   function exportConfig() {
