@@ -14,6 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const pdfControls = document.getElementById("pdfControls");
   const copyButton = document.getElementById("copyItem");
   const pasteButton = document.getElementById("pasteItem");
+  const drawHRline = document.getElementById("createHr");
   let isDrawing = false;
 
   // PDF navigation variables
@@ -37,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
   nextPageButton.addEventListener("click", showNextPage);
   copyButton.addEventListener("click", copySelectedItem);
   pasteButton.addEventListener("click", pasteItem);
+  drawHRline.addEventListener("click",createHr);
 
   const selectionBox = document.createElement("div");
   selectionBox.id = "selection-box";
@@ -933,6 +935,66 @@ enableKeyboardMovement();
     
   }
 
+  function createHr(x, y) {
+    const hr = document.createElement("hr");
+    hr.classList.add("horizontal-line");
+    hr.style.margin = "0";
+    hr.style.border = "none";
+    hr.style.borderTop = "2px solid black";
+   
+    // Style the container div
+    hr.style.position = "absolute";
+    hr.style.left = `${x}px`;
+    hr.style.top = `${y}px`;
+    hr.style.width = "200px"; // Default width
+    
+    canvas.appendChild(hr);
+    // Make the container draggable and removable
+    makeDraggable(hr);
+    makeRemovable(hr);
+    // Add click and resize functionality
+    hr.addEventListener("click", (e) => {
+      e.stopPropagation();
+      
+      // Remove selection from all other items
+      document.querySelectorAll(".selected-item").forEach(item => {
+        item.classList.remove("selected-item");
+      });
+      
+      // Remove existing resize handles
+      document.querySelectorAll(".resize-handle").forEach(handle => handle.remove());
+      
+      // Add selection and resize handles
+      hr.classList.add("selected-item");
+      createResizeHandles(
+        hr,
+        () => (isResizing = true),
+        () => (isResizing = false)
+      );
+    });
+    
+    return hr;
+  }
+  
+  // Modify the startDrawing and handleCanvasClick functions to support HR creation
+  function startDrawing() {
+    isDrawing = true;
+  }
+  
+  function handleCanvasClick(event) {
+    if (!isDrawing) return;
+    
+    const rect = canvas.getBoundingClientRect();
+    const mouseX = event.clientX - rect.left;
+    const mouseY = event.clientY - rect.top;
+  
+    // Create HR line at clicked position
+    createHr(mouseX, mouseY);
+    
+    // Reset drawing mode
+    isDrawing = false;
+  }
+
   function exportConfig() {
     // Get template image info (if exists)
     const templateImg = document.getElementById("templateImage");
@@ -1068,7 +1130,7 @@ enableKeyboardMovement();
     // Embed a standard font
     return await doc.embedFont(PDFLib.StandardFonts.Helvetica);
   }
-
+  
   async function createPdf() {
     // If no PDFLib document is available, create one
     if (!pdfLibDoc) {
@@ -1193,6 +1255,38 @@ enableKeyboardMovement();
         });
       }
     }
+    for (const item of items) {
+    if (item.classList.contains("horizontal-line")) {
+      // Get canvas and PDF page dimensions
+      const canvasWidth = parseFloat(canvas.style.width) || canvas.offsetWidth;
+      const canvasHeight = parseFloat(canvas.style.height) || canvas.offsetHeight;
+      const { width, height } = page.getSize();
+
+      // Calculate scale factors
+      const scaleX = width / canvasWidth;
+      const scaleY = height / canvasHeight;
+
+      // Calculate line coordinates
+      const lineWidth = item.offsetWidth * scaleX;
+      const x = item.offsetLeft * scaleX;
+      const y = height - (item.offsetTop * scaleY) - (item.offsetHeight * scaleY / 2);
+
+      // Draw the line in PDF
+      page.drawLine({
+        start: { x: x, y: y },
+        end: { x: x + lineWidth, y: y },
+        thickness: 2,
+        color: PDFLib.rgb(0, 0, 0),
+      });
+    }
+  }
+    // page.drawLine({
+    //   start: { x: 50, y: 740 },
+    //   end: { x: 550, y: 740 },
+    //   thickness: 2,
+    //   color: PDFLib.rgb(0, 0, 0),
+    // });
+
     // Save the PDF
     const pdfBytes = await workingPdfDoc.save();
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
