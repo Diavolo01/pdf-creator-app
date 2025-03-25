@@ -697,90 +697,109 @@ enableKeyboardMovement();
     // );
   }
 
-  function createResizeHandles(
-    container,
-    onResizeStart = () => {},
-    onResizeEnd = () => {}
-  ) {
-    const corners = ["top-left", "top-right", "bottom-left", "bottom-right"];
+function createResizeHandles(
+  container,
+  onResizeStart = () => {},
+  onResizeEnd = () => {}
+) {
+  const corners = ["top-left", "top-right", "bottom-left", "bottom-right"];
 
-    corners.forEach((corner) => {
-      const handle = document.createElement("div");
-      handle.classList.add("resize-handle", corner);
-      container.appendChild(handle);
+  corners.forEach((corner) => {
+    const handle = document.createElement("div");
+    handle.classList.add("resize-handle", corner);
+    
+    // Add explicit styling to make handles visible
+    handle.style.position = 'absolute';
+    handle.style.width = '10px';
+    handle.style.height = '10px';
+    handle.style.backgroundColor = '#0066ff';
+    handle.style.opacity = '0.7';
+    
+    // Positioning logic for each corner
+    switch(corner) {
+      case 'top-left':
+        handle.style.top = '-5px';
+        handle.style.left = '-5px';
+        handle.style.cursor = 'nwse-resize';
+        break;
+      case 'top-right':
+        handle.style.top = '-5px';
+        handle.style.right = '-5px';
+        handle.style.cursor = 'nesw-resize';
+        break;
+      case 'bottom-left':
+        handle.style.bottom = '-5px';
+        handle.style.left = '-5px';
+        handle.style.cursor = 'nesw-resize';
+        break;
+      case 'bottom-right':
+        handle.style.bottom = '-5px';
+        handle.style.right = '-5px';
+        handle.style.cursor = 'nwse-resize';
+        break;
+    }
 
-      handle.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        e.stopPropagation(); // Prevent triggering container drag event
+    container.appendChild(handle);
 
-        onResizeStart(); // Mark resizing as active
+    handle.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-        const startX = e.clientX;
-        const startY = e.clientY;
-        const startWidth = container.offsetWidth;
-        const startHeight = container.offsetHeight;
-        const startLeft = container.offsetLeft;
-        const startTop = container.offsetTop;
+      onResizeStart();
 
-        const resize = (e) => {
-          const diffX = e.clientX - startX;
-          const diffY = e.clientY - startY;
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startWidth = container.offsetWidth;
+      const startHeight = container.offsetHeight;
+      const startLeft = container.offsetLeft;
+      const startTop = container.offsetTop;
 
-          let newWidth = startWidth;
-          let newHeight = startHeight;
-          let newLeft = startLeft;
-          let newTop = startTop;
+      const resize = (e) => {
+        const diffX = e.clientX - startX;
+        const diffY = e.clientY - startY;
 
-          if (corner.includes("right")) {
-            newWidth = startWidth + diffX;
-          }
-          if (corner.includes("left")) {
-            newWidth = startWidth - diffX;
-            newLeft = startLeft + diffX;
-          }
-          if (corner.includes("bottom")) {
-            newHeight = startHeight + diffY;
-          }
-          if (corner.includes("top")) {
-            newHeight = startHeight - diffY;
-            newTop = startTop + diffY;
-          }
+        let newWidth = startWidth;
+        let newHeight = startHeight;
+        let newLeft = startLeft;
+        let newTop = startTop;
 
-          container.style.width = `${Math.max(10, newWidth)}px`;
-          container.style.height = `${Math.max(10, newHeight)}px`;
+        if (corner.includes("right")) {
+          newWidth = startWidth + diffX;
+        }
+        if (corner.includes("left")) {
+          newWidth = startWidth - diffX;
+          newLeft = startLeft + diffX;
+        }
+        if (corner.includes("bottom")) {
+          newHeight = startHeight + diffY;
+        }
+        if (corner.includes("top")) {
+          newHeight = startHeight - diffY;
+          newTop = startTop + diffY;
+        }
 
-          if (corner.includes("left")) container.style.left = `${newLeft}px`;
-          if (corner.includes("top")) container.style.top = `${newTop}px`;
-        };
+        container.style.width = `${Math.max(10, newWidth)}px`;
+        container.style.height = `${Math.max(10, newHeight)}px`;
 
-        const stopResize = () => {
-          onResizeEnd(); // Mark resizing as inactive
-          document.removeEventListener("mousemove", resize);
-          document.removeEventListener("mouseup", stopResize);
-        };
+        if (corner.includes("left")) container.style.left = `${newLeft}px`;
+        if (corner.includes("top")) container.style.top = `${newTop}px`;
+      };
 
-        document.addEventListener("mousemove", resize);
-        document.addEventListener("mouseup", stopResize);
-      });
+      const stopResize = () => {
+        onResizeEnd();
+        document.removeEventListener("mousemove", resize);
+        document.removeEventListener("mouseup", stopResize);
+      };
+
+      document.addEventListener("mousemove", resize);
+      document.addEventListener("mouseup", stopResize);
     });
-  }
+  });
+}
 
   function startDrawing() {
     isDrawing = true;
     currentDrawMode = 'textbox'; 
-  }
-
-  function handleCanvasClick(event) {
-    if (!isDrawing) return;
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
-
-    const textContent = prompt("Enter the content for the textbox:");
-    if (textContent) {
-      createTextbox(mouseX, mouseY, textContent);
-    }
-    isDrawing = false;
   }
 
   let textBoxCounter = 1;
@@ -933,7 +952,69 @@ enableKeyboardMovement();
       () => (isResizing = true),
       () => (isResizing = false)
     );
-    
+  }
+
+  function createResizeHandlesforHR(element, startResize, endResize) {
+    // Create resize handles for width (horizontal)
+    const leftHandle = document.createElement('div');
+    leftHandle.classList.add('resize-handle', 'left-handle');
+    leftHandle.style.position = 'absolute';
+    leftHandle.style.left = '-5px';
+    leftHandle.style.top = '50%';
+    leftHandle.style.transform = 'translateY(-50%)';
+    leftHandle.style.width = '10px';
+    leftHandle.style.height = '20px';
+    leftHandle.style.backgroundColor = 'blue';
+    leftHandle.style.cursor = 'ew-resize';
+  
+    const rightHandle = document.createElement('div');
+    rightHandle.classList.add('resize-handle', 'right-handle');
+    rightHandle.style.position = 'absolute';
+    rightHandle.style.right = '-5px';
+    rightHandle.style.top = '50%';
+    rightHandle.style.transform = 'translateY(-50%)';
+    rightHandle.style.width = '10px';
+    rightHandle.style.height = '20px';
+    rightHandle.style.backgroundColor = 'blue';
+    rightHandle.style.cursor = 'ew-resize';
+  
+    // Attach resize logic
+    leftHandle.addEventListener('mousedown', initResize);
+    rightHandle.addEventListener('mousedown', initResize);
+  
+    element.appendChild(leftHandle);
+    element.appendChild(rightHandle);
+  
+    function initResize(e) {
+      e.stopPropagation();
+      startResize();
+      
+      const isLeftHandle = e.target.classList.contains('left-handle');
+      const startX = e.clientX;
+      const startWidth = parseInt(window.getComputedStyle(element).width);
+  
+      function onMouseMove(moveEvent) {
+        const dx = moveEvent.clientX - startX;
+        
+        if (isLeftHandle) {
+          // Resize from left side
+          element.style.width = `${startWidth - dx}px`;
+          element.style.left = `${parseFloat(element.style.left) + dx}px`;
+        } else {
+          // Resize from right side
+          element.style.width = `${startWidth + dx}px`;
+        }
+      }
+  
+      function onMouseUp() {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        endResize();
+      }
+  
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    }
   }
 
   function createHr(x, y) {
@@ -947,7 +1028,7 @@ enableKeyboardMovement();
     hr.style.position = "absolute";
     hr.style.left = `${x}px`;
     hr.style.top = `${y}px`;
-    hr.style.width = "200px"; // Default width
+    hr.style.width = "300px"; // Default width
     
     canvas.appendChild(hr);
     // Make the container draggable and removable
@@ -1002,7 +1083,7 @@ enableKeyboardMovement();
     isDrawing = false;
     currentDrawMode = null; // Reset drawing mode
   }
-  
+
   function exportConfig() {
     // Get template image info (if exists)
     const templateImg = document.getElementById("templateImage");
