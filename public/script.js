@@ -21,7 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentPdf = null;
   let currentPage = 1;
   let totalPages = 1;
-  let currentDrawMode = null; 
+  let currentDrawMode = null;
   // Store the PDFLib document
   let pdfLibDoc = null;
   let originalPdfArrayBuffer = null;
@@ -48,11 +48,11 @@ document.addEventListener("DOMContentLoaded", () => {
   selectionBox.style.pointerEvents = "none"; // This prevents the box from interfering with clicks
   selectionBox.style.display = "none";
   canvas.appendChild(selectionBox);
-  
+
   // // Variables to track selection box
   let isSelecting = false;
   let startX, startY;
-  
+
   // // Add mouse events for selection box
   canvas.addEventListener("mousedown", (e) => {
     // Only start selection if it's a direct click on the canvas (not on an item)
@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", () => {
       isSelecting = true;
       startX = e.clientX - canvas.getBoundingClientRect().left;
       startY = e.clientY - canvas.getBoundingClientRect().top;
-      
+
       // Initialize selection box
       selectionBox.style.left = startX + "px";
       selectionBox.style.top = startY + "px";
@@ -69,44 +69,42 @@ document.addEventListener("DOMContentLoaded", () => {
       selectionBox.style.display = "block";
     }
   });
-  
+
   canvas.addEventListener("mousemove", (e) => {
     if (!isSelecting) return;
-    
+
     const currentX = e.clientX - canvas.getBoundingClientRect().left;
     const currentY = e.clientY - canvas.getBoundingClientRect().top;
-    
+
     // Calculate the selection box dimensions
     const width = Math.abs(currentX - startX);
     const height = Math.abs(currentY - startY);
-    
+
     // Set the selection box position and size
     selectionBox.style.left = Math.min(startX, currentX) + "px";
     selectionBox.style.top = Math.min(startY, currentY) + "px";
     selectionBox.style.width = width + "px";
     selectionBox.style.height = height + "px";
-
-    
   });
-  
+
   canvas.addEventListener("mouseup", () => {
     if (!isSelecting) return;
-    
+
     // Get the selection box boundaries
     const boxLeft = parseInt(selectionBox.style.left);
     const boxTop = parseInt(selectionBox.style.top);
     const boxRight = boxLeft + parseInt(selectionBox.style.width);
     const boxBottom = boxTop + parseInt(selectionBox.style.height);
-    
+
     // Find all items that are within the selection box
-    const items = Array.from(canvas.children).filter(item => {
+    const items = Array.from(canvas.children).filter((item) => {
       if (item === selectionBox || item.id === "templateImage") return false;
-      
+
       const itemLeft = item.offsetLeft;
       const itemTop = item.offsetTop;
       const itemRight = itemLeft + item.offsetWidth;
       const itemBottom = itemTop + item.offsetHeight;
-      
+
       // Check if the item intersects with the selection box
       return (
         itemLeft < boxRight &&
@@ -115,19 +113,21 @@ document.addEventListener("DOMContentLoaded", () => {
         itemBottom > boxTop
       );
     });
-      items.forEach((item) => {
-        item.classList.add("selected-item");
-        selectItem(item, true);
-        console.log(item)
-        console.log(isSelecting)
-      });
-      if(items.length > 0){
-        document.querySelectorAll(".resize-handle").forEach(handle => handle.remove());
-        isSelecting = true;
-      }else{
-        isSelecting = false;
-      }
-    
+    items.forEach((item) => {
+      item.classList.add("selected-item");
+      selectItem(item, true);
+      console.log(item);
+      console.log(isSelecting);
+    });
+    if (items.length > 0) {
+      document
+        .querySelectorAll(".resize-handle")
+        .forEach((handle) => handle.remove());
+      isSelecting = true;
+    } else {
+      isSelecting = false;
+    }
+
     // Hide the selection box
     selectionBox.style.display = "none";
     // If any items were selected, update the properties panel for the first one
@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
       updatePropertiesPanel(items[0]);
     }
   });
-  
+
   // Cancel selection if mouse leaves the canvas
   canvas.addEventListener("mouseleave", () => {
     if (isSelecting) {
@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
       isSelecting = false;
     }
   });
-  
+
   // Modify the existing canvas click event to account for the selection box
   canvas.removeEventListener("click", handleCanvasClick);
   canvas.addEventListener("click", (e) => {
@@ -155,8 +155,8 @@ document.addEventListener("DOMContentLoaded", () => {
       selectItem(e.target);
       e.stopPropagation();
     }
-    
-  //   // If clicked directly on canvas (not during a selection)
+
+    //   // If clicked directly on canvas (not during a selection)
     else if (e.target === canvas && !isSelecting) {
       // Click on empty canvas to clear all selections
       document.querySelectorAll(".selected-item").forEach((item) => {
@@ -168,31 +168,33 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   function removeResizeHandles(element) {
     const handles = element.querySelectorAll(".resize-handle");
-    handles.forEach(handle => handle.remove());
-}
-function setupImageContainerInteractions(imgContainer) {
-  makeDraggable(imgContainer);
+    handles.forEach((handle) => handle.remove());
+  }
+  function setupImageContainerInteractions(imgContainer) {
+    makeDraggable(imgContainer);
 
-  imgContainer.addEventListener("click", (e) => {
-    e.stopPropagation();
-    
-    // Remove selection from all other items
-    document.querySelectorAll(".selected-item").forEach(item => {
-      item.classList.remove("selected-item");
+    imgContainer.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      // Remove selection from all other items
+      document.querySelectorAll(".selected-item").forEach((item) => {
+        item.classList.remove("selected-item");
+      });
+
+      // Remove existing resize handles
+      document
+        .querySelectorAll(".resize-handle")
+        .forEach((handle) => handle.remove());
+
+      // Add selection and resize handles to this image container
+      imgContainer.classList.add("selected-item");
+      createResizeHandles(
+        imgContainer,
+        () => (isResizing = true),
+        () => (isResizing = false)
+      );
     });
-    
-    // Remove existing resize handles
-    document.querySelectorAll(".resize-handle").forEach(handle => handle.remove());
-    
-    // Add selection and resize handles to this image container
-    imgContainer.classList.add("selected-item");
-    createResizeHandles(
-      imgContainer,
-      () => (isResizing = true),
-      () => (isResizing = false)
-    );
-  });
-}
+  }
   // Function to convert hex color to RGB
   function hexToRgb(hex) {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -353,225 +355,242 @@ function setupImageContainerInteractions(imgContainer) {
     }
   }
   let clipboard = { type: null, items: [] }; // Store copied items
-let pasteCount = 1; // Track how many times items have been pasted
-let lastPastedBottom = 0; // Store the last pasted element’s bottom position
+  let pasteCount = 1; // Track how many times items have been pasted
+  let lastPastedBottom = 0; // Store the last pasted element’s bottom position
 
-function copySelectedItem() {
+  function copySelectedItem() {
     clipboard.items = []; // Clear clipboard
     pasteCount = 1;
     lastPastedBottom = 0; // Reset position tracking
 
     document.querySelectorAll(".selected-item").forEach((selectedItem) => {
-        let copiedData = null;
+      let copiedData = null;
 
-        if (selectedItem.classList.contains("text-item")) {
-            // Copy text item
-            copiedData = {
-                type: "text",
-                content: selectedItem.textContent,
-                fontSize: selectedItem.style.fontSize,
-                fontColor: selectedItem.style.color,
-                textAlign: selectedItem.style.textAlign,
-                width: selectedItem.offsetWidth,
-                height: selectedItem.offsetHeight,
-                name: selectedItem.dataset.name,
-                left: selectedItem.offsetLeft,
-                top: selectedItem.offsetTop,
-            };
-        } else if (selectedItem.classList.contains("image-container")) {
-            // Copy image item
-            const img = selectedItem.querySelector("img");
-            if (!img) return;
+      if (selectedItem.classList.contains("text-item")) {
+        // Copy text item
+        copiedData = {
+          type: "text",
+          content: selectedItem.textContent,
+          fontSize: selectedItem.style.fontSize,
+          fontColor: selectedItem.style.color,
+          textAlign: selectedItem.style.textAlign,
+          width: selectedItem.offsetWidth,
+          height: selectedItem.offsetHeight,
+          name: selectedItem.dataset.name,
+          left: selectedItem.offsetLeft,
+          top: selectedItem.offsetTop,
+        };
+      } else if (selectedItem.classList.contains("image-container")) {
+        // Copy image item
+        const img = selectedItem.querySelector("img");
+        if (!img) return;
 
-            copiedData = {
-                type: "image",
-                src: img.src,
-                width: selectedItem.offsetWidth,
-                height: selectedItem.offsetHeight,
-                left: selectedItem.offsetLeft,
-                top: selectedItem.offsetTop,
-            };
-        }
+        copiedData = {
+          type: "image",
+          src: img.src,
+          width: selectedItem.offsetWidth,
+          height: selectedItem.offsetHeight,
+          left: selectedItem.offsetLeft,
+          top: selectedItem.offsetTop,
+        };
+      } else if (selectedItem.classList.contains("horizontal-line")) {
+        copiedData = {
+          type: "horizontal-line",
+          width: selectedItem.offsetWidth,
+          left: selectedItem.offsetLeft,
+          top: selectedItem.offsetTop,
+        };
+      }
 
-        if (copiedData) clipboard.items.push(copiedData);
+      if (copiedData) clipboard.items.push(copiedData);
     });
 
-    clipboard.type = clipboard.items.length > 0 ? clipboard.items[0].type : null;
+    clipboard.type =
+      clipboard.items.length > 0 ? clipboard.items[0].type : null;
 
     if (clipboard.items.length > 0) {
-        console.log(`${clipboard.items.length} item(s) copied!`);
-        lastPastedBottom = Math.max(...clipboard.items.map(item => item.top + item.height)); // Store the bottom of the last copied item
+      console.log(`${clipboard.items.length} item(s) copied!`);
+      lastPastedBottom = Math.max(
+        ...clipboard.items.map((item) => item.top + item.height)
+      ); // Store the bottom of the last copied item
     } else {
-        alert("Please select at least one item to copy.");
+      alert("Please select at least one item to copy.");
     }
-}
+  }
 
-function pasteItem() {
+  function pasteItem() {
     if (clipboard.items.length === 0) {
-        console.log("Nothing to paste!");
-        return;
+      console.log("Nothing to paste!");
+      return;
     }
 
     const MinOffset = 15; // Minimum space between pastes
     let firstPaste = pasteCount === 1; // Check if it's the first paste
 
     clipboard.items.forEach((copiedItem) => {
-        let newElement = null;
-        let x = copiedItem.left; // Maintain the same x position
-        let y = firstPaste 
-            ? copiedItem.top + copiedItem.height + MinOffset // Move it below the copied one
-            : lastPastedBottom + MinOffset; // Stack below the last pasted item
+      let newElement = null;
+      let x = copiedItem.left; // Maintain the same x position
+      let y = firstPaste
+        ? copiedItem.top + copiedItem.height + MinOffset // Move it below the copied one
+        : lastPastedBottom + MinOffset; // Stack below the last pasted item
 
-        if (copiedItem.type === "text") {
-            // Create new textbox
-            newElement = createTextbox(x, y, copiedItem.content, copiedItem.name);
-            console.log(pasteCount);
+      if (copiedItem.type === "text") {
+        // Create new textbox
+        newElement = createTextbox(x, y, copiedItem.content, copiedItem.name);
+        console.log(pasteCount);
 
-            // Apply copied styles
-            newElement.style.fontSize = copiedItem.fontSize;
-            newElement.style.color = copiedItem.fontColor;
-            newElement.style.textAlign = copiedItem.textAlign;
-            newElement.style.width = copiedItem.width -10+ "px";
-            newElement.style.height = copiedItem.height -10+ "px";
-        } else if (copiedItem.type === "image") {
-            // Create new image container
-            newElement = createImageContainer(copiedItem.src);
-            newElement.style.left = x + "px";
-            newElement.style.top = y + "px";
-            newElement.style.width = copiedItem.width + "px";
-            newElement.style.height = copiedItem.height + "px";
+        // Apply copied styles
+        newElement.style.fontSize = copiedItem.fontSize;
+        newElement.style.color = copiedItem.fontColor;
+        newElement.style.textAlign = copiedItem.textAlign;
+        newElement.style.width = copiedItem.width - 10 + "px";
+        newElement.style.height = copiedItem.height - 10 + "px";
+      } else if (copiedItem.type === "image") {
+        // Create new image container
+        newElement = createImageContainer(copiedItem.src);
+        newElement.style.left = x + "px";
+        newElement.style.top = y + "px";
+        newElement.style.width = copiedItem.width + "px";
+        newElement.style.height = copiedItem.height + "px";
 
-            canvas.appendChild(newElement);
-        }
-
-        if (newElement) {
-            selectItem(newElement, true); // Keep newly pasted items selected
-            lastPastedBottom = y + newElement.offsetHeight; // Update last pasted position
-        }
+        canvas.appendChild(newElement);
+      } else if (copiedItem.type === "horizontal-line") {
+        // Create new horizontal line
+        newElement = createHr(x, y);
+        newElement.style.width = copiedItem.width + "px";
+      }
+      if (newElement) {
+        selectItem(newElement, true); // Keep newly pasted items selected
+        lastPastedBottom = y + (newElement.offsetHeight || 2); // Update last pasted position
+      }
     });
 
     pasteCount++; // Track paste count
     console.log(`${clipboard.items.length} item(s) pasted!`);
-}
+  }
 
-function selectItem(element) {
-  // Toggle selection: If already selected, remove it
-  if (element.classList.contains("selected-item") ) {
+  function selectItem(element) {
+    // Toggle selection: If already selected, remove it
+    if (element.classList.contains("selected-item")) {
       //element.classList.remove("selected-item");
       element.style.outline = "1px solid #000";
-
-  } else {  
+    } else {
       element.classList.add("selected-item");
       //element.style.outline = "2px solid #0066ff";
-  }
+    }
 
-  // Update properties panel for text items
-  if (element.classList.contains("text-item")) {
+    // Update properties panel for text items
+    if (element.classList.contains("text-item")) {
       updatePropertiesPanel(element);
-  }
-}
-
-// Add keyboard shortcuts for copy-paste
-document.addEventListener("keydown", (e) => {
-  // Check if Ctrl+C is pressed (Cmd+C on Mac)
-  if ((e.ctrlKey || e.metaKey) && e.key === "c") {
-    copySelectedItem();
+    }
   }
 
-  // Check if Ctrl+V is pressed (Cmd+V on Mac)
-  if ((e.ctrlKey || e.metaKey) && e.key === "v") {
-    pasteItem();
-  }
-});
+  // Add keyboard shortcuts for copy-paste
+  document.addEventListener("keydown", (e) => {
+    // Check if Ctrl+C is pressed (Cmd+C on Mac)
+    if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+      copySelectedItem();
+    }
 
-function enableGroupMovement() {
-  let isDraggingGroup = false;
-  let lastX, lastY;
-
-  document.addEventListener("mousedown", (e) => {
-    const target = e.target;
-    
-    // Check if the target or its parent is a selected item
-    const selectedElement = target.classList.contains("selected-item") ? 
-      target : target.closest(".selected-item");
-    
-    if (selectedElement && document.querySelectorAll(".selected-item").length > 1) {
-      isDraggingGroup = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
-      e.preventDefault();
-      e.stopPropagation();
+    // Check if Ctrl+V is pressed (Cmd+V on Mac)
+    if ((e.ctrlKey || e.metaKey) && e.key === "v") {
+      pasteItem();
     }
   });
 
-  document.addEventListener("mousemove", (e) => {
-    if (!isDraggingGroup) return;
-    
-    const diffX = e.clientX - lastX;
-    const diffY = e.clientY - lastY;
-    
-    document.querySelectorAll(".selected-item").forEach((item) => {
-      const currentLeft = parseInt(item.style.left) || item.offsetLeft;
-      const currentTop = parseInt(item.style.top) || item.offsetTop;
-      
-      item.style.left = (currentLeft + diffX) + "px";
-      item.style.top = (currentTop + diffY) + "px";
-    });
-    
-    lastX = e.clientX;
-    lastY = e.clientY;
-  });
+  function enableGroupMovement() {
+    let isDraggingGroup = false;
+    let lastX, lastY;
 
-  document.addEventListener("mouseup", () => {
-    isDraggingGroup = false;
-  });
-}
+    document.addEventListener("mousedown", (e) => {
+      const target = e.target;
 
-// Add keyboard arrow key movement for selected items
-function enableKeyboardMovement() {
-  document.addEventListener("keydown", (e) => {
-    // Only if we have selected items and not editing text
-    if (document.activeElement.contentEditable !== "true" && 
-        document.querySelectorAll(".selected-item").length > 0) {
-      
-      const step = e.shiftKey ? 10 : 1; // Larger movement with Shift key
-      let deltaX = 0;
-      let deltaY = 0;
-      
-      switch (e.key) {
-        case "ArrowUp":
-          deltaY = -step;
-          break;
-        case "ArrowDown":
-          deltaY = step;
-          break;
-        case "ArrowLeft":
-          deltaX = -step;
-          break;
-        case "ArrowRight":
-          deltaX = step;
-          break;
-        default:
-          return; // Exit if not an arrow key
+      // Check if the target or its parent is a selected item
+      const selectedElement = target.classList.contains("selected-item")
+        ? target
+        : target.closest(".selected-item");
+
+      if (
+        selectedElement &&
+        document.querySelectorAll(".selected-item").length > 1
+      ) {
+        isDraggingGroup = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        e.preventDefault();
+        e.stopPropagation();
       }
-      
-      // Prevent scrolling the page
-      e.preventDefault();
-      
-      // Move all selected items
+    });
+
+    document.addEventListener("mousemove", (e) => {
+      if (!isDraggingGroup) return;
+
+      const diffX = e.clientX - lastX;
+      const diffY = e.clientY - lastY;
+
       document.querySelectorAll(".selected-item").forEach((item) => {
         const currentLeft = parseInt(item.style.left) || item.offsetLeft;
         const currentTop = parseInt(item.style.top) || item.offsetTop;
-        
-        item.style.left = (currentLeft + deltaX) + "px";
-        item.style.top = (currentTop + deltaY) + "px";
+
+        item.style.left = currentLeft + diffX + "px";
+        item.style.top = currentTop + diffY + "px";
       });
-    }
-  });
-}
-enableGroupMovement();
-enableKeyboardMovement();
-  
+
+      lastX = e.clientX;
+      lastY = e.clientY;
+    });
+
+    document.addEventListener("mouseup", () => {
+      isDraggingGroup = false;
+    });
+  }
+
+  // Add keyboard arrow key movement for selected items
+  function enableKeyboardMovement() {
+    document.addEventListener("keydown", (e) => {
+      // Only if we have selected items and not editing text
+      if (
+        document.activeElement.contentEditable !== "true" &&
+        document.querySelectorAll(".selected-item").length > 0
+      ) {
+        const step = e.shiftKey ? 10 : 1; // Larger movement with Shift key
+        let deltaX = 0;
+        let deltaY = 0;
+
+        switch (e.key) {
+          case "ArrowUp":
+            deltaY = -step;
+            break;
+          case "ArrowDown":
+            deltaY = step;
+            break;
+          case "ArrowLeft":
+            deltaX = -step;
+            break;
+          case "ArrowRight":
+            deltaX = step;
+            break;
+          default:
+            return; // Exit if not an arrow key
+        }
+
+        // Prevent scrolling the page
+        e.preventDefault();
+
+        // Move all selected items
+        document.querySelectorAll(".selected-item").forEach((item) => {
+          const currentLeft = parseInt(item.style.left) || item.offsetLeft;
+          const currentTop = parseInt(item.style.top) || item.offsetTop;
+
+          item.style.left = currentLeft + deltaX + "px";
+          item.style.top = currentTop + deltaY + "px";
+        });
+      }
+    });
+  }
+  enableGroupMovement();
+  enableKeyboardMovement();
+
   function addImageUrl() {
     if (isDrawing) return;
     isDrawing = true;
@@ -598,9 +617,9 @@ enableKeyboardMovement();
     imgContainer.style.top = "50px";
     imgContainer.style.width = "150px";
     imgContainer.style.height = "150px";
-  
+
     const img = document.createElement("img");
-  
+
     // Check if the image URL is from a remote source
     if (isValidUrl(imageUrl)) {
       convertImageToBase64(imageUrl)
@@ -628,11 +647,11 @@ enableKeyboardMovement();
         setupImageContainerInteractions(imgContainer);
       };
     }
-  
+
     img.onerror = () => {
       alert("Failed to load image. Please check the URL.");
     };
-  
+
     return imgContainer;
   }
   function isValidUrl(url) {
@@ -697,80 +716,84 @@ enableKeyboardMovement();
     // );
   }
 
-  function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = () => {}) {
+  function createResizeHandles(
+    container,
+    onResizeStart = () => {},
+    onResizeEnd = () => {}
+  ) {
     // Determine if the container is a horizontal line
-    const isHorizontalLine = container.classList.contains('horizontal-line');
-    
-    const corners = isHorizontalLine 
-      ? ["left", "right"] 
+    const isHorizontalLine = container.classList.contains("horizontal-line");
+
+    const corners = isHorizontalLine
+      ? ["left", "right"]
       : ["top-left", "top-right", "bottom-left", "bottom-right"];
-  
+
     corners.forEach((corner) => {
       const handle = document.createElement("div");
       handle.classList.add("resize-handle", corner);
-  
+
       // Styling for handles
-      handle.style.position = 'absolute';
-      handle.style.width = '10px';
-      handle.style.height = '10px';
-      handle.style.backgroundColor = '#0066ff';
-      handle.style.opacity = '0.7';
-  
+      handle.style.position = "absolute";
+      handle.style.width = "10px";
+      handle.style.height = "10px";
+      handle.style.backgroundColor = "#0066ff";
+      handle.style.opacity = "0.7";
+
       // Positioning logic for handles
       if (isHorizontalLine) {
         console.log("it in");
-        handle.style.height = '15px';
-        handle.style.width = '8px';
-        handle.style.top = '50%';
-        handle.style.transform = 'translateY(-50%)';
-        
-        if (corner === 'left') {
-          handle.style.left = '-7px';
-          handle.style.cursor = 'w-resize';
+        handle.style.height = "15px";
+        handle.style.width = "8px";
+        handle.style.top = "50%";
+        handle.style.transform = "translateY(-50%)";
+
+        if (corner === "left") {
+          handle.style.left = "-7px";
+          handle.style.cursor = "w-resize";
         } else {
-          handle.style.right = '-7px';
-          handle.style.cursor = 'e-resize';
+          handle.style.right = "-7px";
+          handle.style.cursor = "e-resize";
         }
       } else {
         // Original corner positioning logic
-        switch(corner) {
-          case 'top-left':
-            handle.style.top = '-5px';
-            handle.style.left = '-5px';
-            handle.style.cursor = 'nwse-resize';
+        switch (corner) {
+          case "top-left":
+            handle.style.top = "-5px";
+            handle.style.left = "-5px";
+            handle.style.cursor = "nwse-resize";
             break;
-          case 'top-right':
-            handle.style.top = '-5px';
-            handle.style.right = '-5px';
-            handle.style.cursor = 'nesw-resize';
+          case "top-right":
+            handle.style.top = "-5px";
+            handle.style.right = "-5px";
+            handle.style.cursor = "nesw-resize";
             break;
-          case 'bottom-left':
-            handle.style.bottom = '-5px';
-            handle.style.left = '-5px';
-            handle.style.cursor = 'nesw-resize';
+          case "bottom-left":
+            handle.style.bottom = "-5px";
+            handle.style.left = "-5px";
+            handle.style.cursor = "nesw-resize";
             break;
-          case 'bottom-right':
-            handle.style.bottom = '-5px';
-            handle.style.right = '-5px';
-            handle.style.cursor = 'nwse-resize';
+          case "bottom-right":
+            handle.style.bottom = "-5px";
+            handle.style.right = "-5px";
+            handle.style.cursor = "nwse-resize";
             break;
         }
       }
-  
+
       container.appendChild(handle);
-  
+
       handle.addEventListener("mousedown", (e) => {
         e.preventDefault();
         e.stopPropagation();
         onResizeStart();
-  
+
         const startX = e.clientX;
         const startY = e.clientY;
         const startWidth = container.offsetWidth;
         const startHeight = container.offsetHeight;
         const startLeft = container.offsetLeft;
         const startTop = container.offsetTop;
-  
+
         const resize = (e) => {
           const diffX = e.clientX - startX;
           const diffY = e.clientY - startY;
@@ -778,21 +801,21 @@ enableKeyboardMovement();
           let newHeight = startHeight;
           let newLeft = startLeft;
           let newTop = startTop;
-  
+
           if (isHorizontalLine) {
             // For horizontal line, only resize width
-            if (corner === 'left') {
+            if (corner === "left") {
               newWidth = startWidth - diffX;
               newLeft = startLeft + diffX;
             } else {
               newWidth = startWidth + diffX;
             }
-  
+
             // Ensure minimum width
             newWidth = Math.max(10, newWidth);
-  
+
             container.style.width = `${newWidth}px`;
-            if (corner === 'left') {
+            if (corner === "left") {
               container.style.left = `${newLeft}px`;
             }
           } else {
@@ -811,21 +834,21 @@ enableKeyboardMovement();
               newHeight = startHeight - diffY;
               newTop = startTop + diffY;
             }
-  
+
             container.style.width = `${Math.max(10, newWidth)}px`;
             container.style.height = `${Math.max(10, newHeight)}px`;
-            
+
             if (corner.includes("left")) container.style.left = `${newLeft}px`;
             if (corner.includes("top")) container.style.top = `${newTop}px`;
           }
         };
-  
+
         const stopResize = () => {
           onResizeEnd();
           document.removeEventListener("mousemove", resize);
           document.removeEventListener("mouseup", stopResize);
         };
-  
+
         document.addEventListener("mousemove", resize);
         document.addEventListener("mouseup", stopResize);
       });
@@ -833,7 +856,7 @@ enableKeyboardMovement();
   }
   function startDrawing() {
     isDrawing = true;
-    currentDrawMode = 'textbox'; 
+    currentDrawMode = "textbox";
   }
 
   let textBoxCounter = 1;
@@ -865,14 +888,16 @@ enableKeyboardMovement();
     //   () => (isResizing = false)
     // );
     updatePropertiesPanel(textbox);
-  
+
     textbox.addEventListener("click", (e) => {
       e.stopPropagation();
       selectItem(textbox);
-      document.querySelectorAll(".selected-item").forEach(item => {
+      document.querySelectorAll(".selected-item").forEach((item) => {
         item.classList.remove("selected-item");
       });
-      document.querySelectorAll(".resize-handle").forEach(handle => handle.remove());
+      document
+        .querySelectorAll(".resize-handle")
+        .forEach((handle) => handle.remove());
       textbox.classList.add("selected-item");
       createResizeHandles(
         textbox,
@@ -1001,7 +1026,7 @@ enableKeyboardMovement();
     hr.style.left = `${x}px`;
     hr.style.top = `${y}px`;
     hr.style.width = "300px"; // Default width
-    
+
     canvas.appendChild(hr);
     // Make the container draggable and removable
     makeDraggable(hr);
@@ -1009,15 +1034,17 @@ enableKeyboardMovement();
     // Add click and resize functionality
     hr.addEventListener("click", (e) => {
       e.stopPropagation();
-      
+
       // Remove selection from all other items
-      document.querySelectorAll(".selected-item").forEach(item => {
+      document.querySelectorAll(".selected-item").forEach((item) => {
         item.classList.remove("selected-item");
       });
-      
+
       // Remove existing resize handles
-      document.querySelectorAll(".resize-handle").forEach(handle => handle.remove());
-      
+      document
+        .querySelectorAll(".resize-handle")
+        .forEach((handle) => handle.remove());
+
       // Add selection and resize handles
       hr.classList.add("selected-item");
       createResizeHandles(
@@ -1026,32 +1053,32 @@ enableKeyboardMovement();
         () => (isResizing = false)
       );
     });
-    
+
     return hr;
   }
-  
+
   // Modify the startDrawing and handleCanvasClick functions to support HR creation
   function startDrawHr() {
     isDrawing = true;
-    currentDrawMode = 'hr';
+    currentDrawMode = "hr";
   }
-  
+
   function handleCanvasClick(event) {
     if (!isDrawing) return;
-    
+
     const rect = canvas.getBoundingClientRect();
     const mouseX = event.clientX - rect.left;
     const mouseY = event.clientY - rect.top;
-  
-    if (currentDrawMode === 'textbox') {
+
+    if (currentDrawMode === "textbox") {
       const textContent = prompt("Enter the content for the textbox:");
       if (textContent) {
         createTextbox(mouseX, mouseY, textContent);
       }
-    } else if (currentDrawMode === 'hr') {
+    } else if (currentDrawMode === "hr") {
       createHr(mouseX, mouseY);
     }
-    
+
     isDrawing = false;
     currentDrawMode = null; // Reset drawing mode
   }
@@ -1191,7 +1218,7 @@ enableKeyboardMovement();
     // Embed a standard font
     return await doc.embedFont(PDFLib.StandardFonts.Helvetica);
   }
-  
+
   async function createPdf() {
     // If no PDFLib document is available, create one
     if (!pdfLibDoc) {
@@ -1317,30 +1344,33 @@ enableKeyboardMovement();
       }
     }
     for (const item of items) {
-    if (item.classList.contains("horizontal-line")) {
-      // Get canvas and PDF page dimensions
-      const canvasWidth = parseFloat(canvas.style.width) || canvas.offsetWidth;
-      const canvasHeight = parseFloat(canvas.style.height) || canvas.offsetHeight;
-      const { width, height } = page.getSize();
+      if (item.classList.contains("horizontal-line")) {
+        // Get canvas and PDF page dimensions
+        const canvasWidth =
+          parseFloat(canvas.style.width) || canvas.offsetWidth;
+        const canvasHeight =
+          parseFloat(canvas.style.height) || canvas.offsetHeight;
+        const { width, height } = page.getSize();
 
-      // Calculate scale factors
-      const scaleX = width / canvasWidth;
-      const scaleY = height / canvasHeight;
+        // Calculate scale factors
+        const scaleX = width / canvasWidth;
+        const scaleY = height / canvasHeight;
 
-      // Calculate line coordinates
-      const lineWidth = item.offsetWidth * scaleX;
-      const x = item.offsetLeft * scaleX;
-      const y = height - (item.offsetTop * scaleY) - (item.offsetHeight * scaleY / 2);
+        // Calculate line coordinates
+        const lineWidth = item.offsetWidth * scaleX;
+        const x = item.offsetLeft * scaleX;
+        const y =
+          height - item.offsetTop * scaleY - (item.offsetHeight * scaleY) / 2;
 
-      // Draw the line in PDF
-      page.drawLine({
-        start: { x: x, y: y },
-        end: { x: x + lineWidth, y: y },
-        thickness: 2,
-        color: PDFLib.rgb(0, 0, 0),
-      });
+        // Draw the line in PDF
+        page.drawLine({
+          start: { x: x, y: y },
+          end: { x: x + lineWidth, y: y },
+          thickness: 2,
+          color: PDFLib.rgb(0, 0, 0),
+        });
+      }
     }
-  }
     // page.drawLine({
     //   start: { x: 50, y: 740 },
     //   end: { x: 550, y: 740 },
