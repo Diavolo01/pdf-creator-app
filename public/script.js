@@ -423,6 +423,10 @@ document.addEventListener("DOMContentLoaded", () => {
       console.log("Nothing to paste!");
       return;
     }
+    document.querySelectorAll(".selected-item").forEach((selectedItem) => {
+      selectedItem.classList.remove("selected-item");
+      removeResizeHandles(selectedItem);
+    });
 
     const MinOffset = 15; // Minimum space between pastes
     let firstPaste = pasteCount === 1; // Check if it's the first paste
@@ -431,8 +435,8 @@ document.addEventListener("DOMContentLoaded", () => {
       let newElement = null;
       let x = copiedItem.left; // Maintain the same x position
       let y = firstPaste
-        ? copiedItem.top + copiedItem.height + MinOffset // Move it below the copied one
-        : lastPastedBottom + MinOffset; // Stack below the last pasted item
+      ? Number(copiedItem.top) + Number(copiedItem.height??0) + Number(MinOffset) // Move it below the copied one
+      : Number(lastPastedBottom) + Number(MinOffset); // Stack below the last pasted item
 
       if (copiedItem.type === "text") {
         // Create new textbox
