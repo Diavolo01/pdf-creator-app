@@ -697,106 +697,140 @@ enableKeyboardMovement();
     // );
   }
 
-function createResizeHandles(
-  container,
-  onResizeStart = () => {},
-  onResizeEnd = () => {}
-) {
-  const corners = ["top-left", "top-right", "bottom-left", "bottom-right"];
-
-  corners.forEach((corner) => {
-    const handle = document.createElement("div");
-    handle.classList.add("resize-handle", corner);
+  function createResizeHandles(container, onResizeStart = () => {}, onResizeEnd = () => {}) {
+    // Determine if the container is a horizontal line
+    const isHorizontalLine = container.classList.contains('horizontal-line');
     
-    // Add explicit styling to make handles visible
-    handle.style.position = 'absolute';
-    handle.style.width = '10px';
-    handle.style.height = '10px';
-    handle.style.backgroundColor = '#0066ff';
-    handle.style.opacity = '0.7';
-    
-    // Positioning logic for each corner
-    switch(corner) {
-      case 'top-left':
-        handle.style.top = '-5px';
-        handle.style.left = '-5px';
-        handle.style.cursor = 'nwse-resize';
-        break;
-      case 'top-right':
-        handle.style.top = '-5px';
-        handle.style.right = '-5px';
-        handle.style.cursor = 'nesw-resize';
-        break;
-      case 'bottom-left':
-        handle.style.bottom = '-5px';
-        handle.style.left = '-5px';
-        handle.style.cursor = 'nesw-resize';
-        break;
-      case 'bottom-right':
-        handle.style.bottom = '-5px';
-        handle.style.right = '-5px';
-        handle.style.cursor = 'nwse-resize';
-        break;
-    }
-
-    container.appendChild(handle);
-
-    handle.addEventListener("mousedown", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      onResizeStart();
-
-      const startX = e.clientX;
-      const startY = e.clientY;
-      const startWidth = container.offsetWidth;
-      const startHeight = container.offsetHeight;
-      const startLeft = container.offsetLeft;
-      const startTop = container.offsetTop;
-
-      const resize = (e) => {
-        const diffX = e.clientX - startX;
-        const diffY = e.clientY - startY;
-
-        let newWidth = startWidth;
-        let newHeight = startHeight;
-        let newLeft = startLeft;
-        let newTop = startTop;
-
-        if (corner.includes("right")) {
-          newWidth = startWidth + diffX;
+    const corners = isHorizontalLine 
+      ? ["left", "right"] 
+      : ["top-left", "top-right", "bottom-left", "bottom-right"];
+  
+    corners.forEach((corner) => {
+      const handle = document.createElement("div");
+      handle.classList.add("resize-handle", corner);
+  
+      // Styling for handles
+      handle.style.position = 'absolute';
+      handle.style.width = '10px';
+      handle.style.height = '10px';
+      handle.style.backgroundColor = '#0066ff';
+      handle.style.opacity = '0.7';
+  
+      // Positioning logic for handles
+      if (isHorizontalLine) {
+        console.log("it in");
+        handle.style.height = '15px';
+        handle.style.width = '8px';
+        handle.style.top = '50%';
+        handle.style.transform = 'translateY(-50%)';
+        
+        if (corner === 'left') {
+          handle.style.left = '-7px';
+          handle.style.cursor = 'w-resize';
+        } else {
+          handle.style.right = '-7px';
+          handle.style.cursor = 'e-resize';
         }
-        if (corner.includes("left")) {
-          newWidth = startWidth - diffX;
-          newLeft = startLeft + diffX;
+      } else {
+        // Original corner positioning logic
+        switch(corner) {
+          case 'top-left':
+            handle.style.top = '-5px';
+            handle.style.left = '-5px';
+            handle.style.cursor = 'nwse-resize';
+            break;
+          case 'top-right':
+            handle.style.top = '-5px';
+            handle.style.right = '-5px';
+            handle.style.cursor = 'nesw-resize';
+            break;
+          case 'bottom-left':
+            handle.style.bottom = '-5px';
+            handle.style.left = '-5px';
+            handle.style.cursor = 'nesw-resize';
+            break;
+          case 'bottom-right':
+            handle.style.bottom = '-5px';
+            handle.style.right = '-5px';
+            handle.style.cursor = 'nwse-resize';
+            break;
         }
-        if (corner.includes("bottom")) {
-          newHeight = startHeight + diffY;
-        }
-        if (corner.includes("top")) {
-          newHeight = startHeight - diffY;
-          newTop = startTop + diffY;
-        }
-
-        container.style.width = `${Math.max(10, newWidth)}px`;
-        container.style.height = `${Math.max(10, newHeight)}px`;
-
-        if (corner.includes("left")) container.style.left = `${newLeft}px`;
-        if (corner.includes("top")) container.style.top = `${newTop}px`;
-      };
-
-      const stopResize = () => {
-        onResizeEnd();
-        document.removeEventListener("mousemove", resize);
-        document.removeEventListener("mouseup", stopResize);
-      };
-
-      document.addEventListener("mousemove", resize);
-      document.addEventListener("mouseup", stopResize);
+      }
+  
+      container.appendChild(handle);
+  
+      handle.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onResizeStart();
+  
+        const startX = e.clientX;
+        const startY = e.clientY;
+        const startWidth = container.offsetWidth;
+        const startHeight = container.offsetHeight;
+        const startLeft = container.offsetLeft;
+        const startTop = container.offsetTop;
+  
+        const resize = (e) => {
+          const diffX = e.clientX - startX;
+          const diffY = e.clientY - startY;
+          let newWidth = startWidth;
+          let newHeight = startHeight;
+          let newLeft = startLeft;
+          let newTop = startTop;
+  
+          if (isHorizontalLine) {
+            // For horizontal line, only resize width
+            if (corner === 'left') {
+              newWidth = startWidth - diffX;
+              newLeft = startLeft + diffX;
+            } else {
+              newWidth = startWidth + diffX;
+            }
+  
+            // Ensure minimum width
+            newWidth = Math.max(10, newWidth);
+  
+            container.style.width = `${newWidth}px`;
+            if (corner === 'left') {
+              container.style.left = `${newLeft}px`;
+            }
+          } else {
+            // Original resize logic for other elements
+            if (corner.includes("right")) {
+              newWidth = startWidth + diffX;
+            }
+            if (corner.includes("left")) {
+              newWidth = startWidth - diffX;
+              newLeft = startLeft + diffX;
+            }
+            if (corner.includes("bottom")) {
+              newHeight = startHeight + diffY;
+            }
+            if (corner.includes("top")) {
+              newHeight = startHeight - diffY;
+              newTop = startTop + diffY;
+            }
+  
+            container.style.width = `${Math.max(10, newWidth)}px`;
+            container.style.height = `${Math.max(10, newHeight)}px`;
+            
+            if (corner.includes("left")) container.style.left = `${newLeft}px`;
+            if (corner.includes("top")) container.style.top = `${newTop}px`;
+          }
+        };
+  
+        const stopResize = () => {
+          onResizeEnd();
+          document.removeEventListener("mousemove", resize);
+          document.removeEventListener("mouseup", stopResize);
+        };
+  
+        document.addEventListener("mousemove", resize);
+        document.addEventListener("mouseup", stopResize);
+      });
     });
-  });
-}
-
+  }
   function startDrawing() {
     isDrawing = true;
     currentDrawMode = 'textbox'; 
@@ -954,76 +988,14 @@ function createResizeHandles(
     );
   }
 
-  function createResizeHandlesforHR(element, startResize, endResize) {
-    // Create resize handles for width (horizontal)
-    const leftHandle = document.createElement('div');
-    leftHandle.classList.add('resize-handle', 'left-handle');
-    leftHandle.style.position = 'absolute';
-    leftHandle.style.left = '-5px';
-    leftHandle.style.top = '50%';
-    leftHandle.style.transform = 'translateY(-50%)';
-    leftHandle.style.width = '10px';
-    leftHandle.style.height = '20px';
-    leftHandle.style.backgroundColor = 'blue';
-    leftHandle.style.cursor = 'ew-resize';
-  
-    const rightHandle = document.createElement('div');
-    rightHandle.classList.add('resize-handle', 'right-handle');
-    rightHandle.style.position = 'absolute';
-    rightHandle.style.right = '-5px';
-    rightHandle.style.top = '50%';
-    rightHandle.style.transform = 'translateY(-50%)';
-    rightHandle.style.width = '10px';
-    rightHandle.style.height = '20px';
-    rightHandle.style.backgroundColor = 'blue';
-    rightHandle.style.cursor = 'ew-resize';
-  
-    // Attach resize logic
-    leftHandle.addEventListener('mousedown', initResize);
-    rightHandle.addEventListener('mousedown', initResize);
-  
-    element.appendChild(leftHandle);
-    element.appendChild(rightHandle);
-  
-    function initResize(e) {
-      e.stopPropagation();
-      startResize();
-      
-      const isLeftHandle = e.target.classList.contains('left-handle');
-      const startX = e.clientX;
-      const startWidth = parseInt(window.getComputedStyle(element).width);
-  
-      function onMouseMove(moveEvent) {
-        const dx = moveEvent.clientX - startX;
-        
-        if (isLeftHandle) {
-          // Resize from left side
-          element.style.width = `${startWidth - dx}px`;
-          element.style.left = `${parseFloat(element.style.left) + dx}px`;
-        } else {
-          // Resize from right side
-          element.style.width = `${startWidth + dx}px`;
-        }
-      }
-  
-      function onMouseUp() {
-        document.removeEventListener('mousemove', onMouseMove);
-        document.removeEventListener('mouseup', onMouseUp);
-        endResize();
-      }
-  
-      document.addEventListener('mousemove', onMouseMove);
-      document.addEventListener('mouseup', onMouseUp);
-    }
-  }
-
   function createHr(x, y) {
-    const hr = document.createElement("hr");
+    const hr = document.createElement("div");
     hr.classList.add("horizontal-line");
     hr.style.margin = "0";
     hr.style.border = "none";
-    hr.style.borderTop = "2px solid black";
-   
+    hr.style.background = "black";
+    hr.style.height = "2px";
+    // hr.style.outline = "2px solid black";
     // Style the container div
     hr.style.position = "absolute";
     hr.style.left = `${x}px`;
