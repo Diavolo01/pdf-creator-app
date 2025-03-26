@@ -354,18 +354,17 @@ document.addEventListener("DOMContentLoaded", () => {
       await renderPdfPage(currentPage);
     }
   }
+
   let clipboard = { type: null, items: [] }; // Store copied items
-  let pasteCount = 1; // Track how many times items have been pasted
-  let lastPastedBottom = 0; // Store the last pasted element’s bottom position
 
   function copySelectedItem() {
     clipboard.items = []; // Clear clipboard
-    pasteCount = 1;
+    pasteCount = 1; // Reset paste count when copying
     lastPastedBottom = 0; // Reset position tracking
-
+  
     document.querySelectorAll(".selected-item").forEach((selectedItem) => {
       let copiedData = null;
-
+  
       if (selectedItem.classList.contains("text-item")) {
         // Copy text item
         copiedData = {
@@ -384,7 +383,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Copy image item
         const img = selectedItem.querySelector("img");
         if (!img) return;
-
+  
         copiedData = {
           type: "image",
           src: img.src,
@@ -401,13 +400,12 @@ document.addEventListener("DOMContentLoaded", () => {
           top: selectedItem.offsetTop,
         };
       }
-
+  
       if (copiedData) clipboard.items.push(copiedData);
     });
-
-    clipboard.type =
-      clipboard.items.length > 0 ? clipboard.items[0].type : null;
-
+  
+    clipboard.type = clipboard.items.length > 0 ? clipboard.items[0].type : null;
+  
     if (clipboard.items.length > 0) {
       console.log(`${clipboard.items.length} item(s) copied!`);
       lastPastedBottom = Math.max(
@@ -417,32 +415,31 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Please select at least one item to copy.");
     }
   }
-
+  
   function pasteItem() {
     if (clipboard.items.length === 0) {
       console.log("Nothing to paste!");
       return;
     }
+  
     document.querySelectorAll(".selected-item").forEach((selectedItem) => {
       selectedItem.classList.remove("selected-item");
       removeResizeHandles(selectedItem);
     });
-
+  
     const MinOffset = 15; // Minimum space between pastes
-    let firstPaste = pasteCount === 1; // Check if it's the first paste
-
+    let offsetMultiplier = pasteCount; // Use paste count to calculate offset
+  
     clipboard.items.forEach((copiedItem) => {
       let newElement = null;
       let x = copiedItem.left; // Maintain the same x position
-      let y = firstPaste
-      ? Number(copiedItem.top) + Number(copiedItem.height??0) + Number(MinOffset) // Move it below the copied one
-      : Number(lastPastedBottom) + Number(MinOffset); // Stack below the last pasted item
-
+      let y = Number(copiedItem.top) + 
+              (Number(copiedItem.height ?? 0) + MinOffset) * offsetMultiplier;
+  
       if (copiedItem.type === "text") {
         // Create new textbox
         newElement = createTextbox(x, y, copiedItem.content, copiedItem.name);
-        console.log(pasteCount);
-
+  
         // Apply copied styles
         newElement.style.fontSize = copiedItem.fontSize;
         newElement.style.color = copiedItem.fontColor;
@@ -456,23 +453,23 @@ document.addEventListener("DOMContentLoaded", () => {
         newElement.style.top = y + "px";
         newElement.style.width = copiedItem.width + "px";
         newElement.style.height = copiedItem.height + "px";
-
+  
         canvas.appendChild(newElement);
       } else if (copiedItem.type === "horizontal-line") {
         // Create new horizontal line
         newElement = createHr(x, y);
         newElement.style.width = copiedItem.width + "px";
       }
+  
       if (newElement) {
         selectItem(newElement, true); // Keep newly pasted items selected
         lastPastedBottom = y + (newElement.offsetHeight || 2); // Update last pasted position
       }
     });
-
-    pasteCount++; // Track paste count
+  
+    pasteCount++; // Increment paste count after each paste operation
     console.log(`${clipboard.items.length} item(s) pasted!`);
   }
-
   function selectItem(element) {
     // Toggle selection: If already selected, remove it
     if (element.classList.contains("selected-item")) {
@@ -1388,7 +1385,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "layout.pdf";
+    // a.download = "layout.pdf";
+    a.target = "_blank"; // Open in a new tab
     a.click();
     URL.revokeObjectURL(url);
   }
