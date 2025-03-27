@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
   const paperSizeSelect = document.getElementById("paperSize");
   const canvas = document.getElementById("canvas");
-  const addImageUrlButton = document.getElementById("addImageURL");
+  const addImageUrlButton = document.getElementById("startDrawImg");
   const exportConfigButton = document.getElementById("exportConfig");
   const importConfigButton = document.getElementById("importConfig");
   const importFileInput = document.getElementById("importFile");
@@ -26,7 +26,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let pdfLibDoc = null;
   let originalPdfArrayBuffer = null;
 
-  addImageUrlButton.addEventListener("click", addImageUrl);
+  addImageUrlButton.addEventListener("click", startDrawImg);
   exportConfigButton.addEventListener("click", exportConfig);
   importConfigButton.addEventListener("click", () => importFileInput.click());
   importFileInput.addEventListener("change", importConfig);
@@ -446,6 +446,7 @@ document.addEventListener("DOMContentLoaded", () => {
         newElement.style.textAlign = copiedItem.textAlign;
         newElement.style.width = copiedItem.width - 10 + "px";
         newElement.style.height = copiedItem.height - 10 + "px";
+        
       } else if (copiedItem.type === "image") {
         // Create new image container
         newElement = createImageContainer(copiedItem.src);
@@ -592,22 +593,18 @@ document.addEventListener("DOMContentLoaded", () => {
   enableGroupMovement();
   enableKeyboardMovement();
 
-  function addImageUrl() {
-    if (isDrawing) return;
+  function startDrawImg(){
     isDrawing = true;
-    const imageUrl =
-      document.getElementById("imageUrlInput")?.value ||
-      prompt("Enter image URL:");
-    const imagePattern = /\.(jpg|jpeg|png|gif|bmp)$/i;
+    currentDrawMode = "img";
+  }
 
-    if (imageUrl && imagePattern.test(imageUrl)) {
+  function addImageUrl(x, y,imageUrl) {
       const imgContainer = createImageContainer(imageUrl);
+      console.log(imgContainer);
       canvas.appendChild(imgContainer);
+      imgContainer.style.left = `${x}px`;
+      imgContainer.style.top = `${y}px`;
       isDrawing = false;
-    } else {
-      alert("Please enter a valid image URL.");
-      isDrawing = false;
-    }
   }
 
   function createImageContainer(imageUrl) {
@@ -618,7 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
     imgContainer.style.top = "50px";
     imgContainer.style.width = "150px";
     imgContainer.style.height = "150px";
-
+    makeRemovable(imgContainer);
     const img = document.createElement("img");
 
     // Check if the image URL is from a remote source
@@ -1072,12 +1069,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const mouseY = event.clientY - rect.top;
 
     if (currentDrawMode === "textbox") {
-      const textContent = prompt("Enter the content for the textbox:");
-      if (textContent) {
-        createTextbox(mouseX, mouseY, textContent);
-      }
+    
+        createTextbox(mouseX, mouseY, 'text');
+      
     } else if (currentDrawMode === "hr") {
       createHr(mouseX, mouseY);
+    }
+    else if (currentDrawMode === "img") {
+      addImageUrl(mouseX,mouseY,"https://dummyimage.com/600x400/000/fff.jpg");
+      console.log("import img");
     }
 
     isDrawing = false;
