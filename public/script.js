@@ -41,8 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
   copyButton.addEventListener("click", copySelectedItem);
   pasteButton.addEventListener("click", pasteItem);
   drawHRline.addEventListener("click", startDrawHr);
-  exportpdfbutton.addEventListener("click",exportPdf);
-  updatedImagebutton.addEventListener("click", updateLastImage)
+  exportpdfbutton.addEventListener("click", exportPdf);
+  updatedImagebutton.addEventListener("click", updateLastImage);
 
   const selectionBox = document.createElement("div");
   selectionBox.id = "selection-box";
@@ -365,10 +365,10 @@ document.addEventListener("DOMContentLoaded", () => {
     clipboard.items = []; // Clear clipboard
     pasteCount = 1; // Reset paste count when copying
     lastPastedBottom = 0; // Reset position tracking
-  
+
     document.querySelectorAll(".selected-item").forEach((selectedItem) => {
       let copiedData = null;
-  
+
       if (selectedItem.classList.contains("text-item")) {
         // Copy text item
         copiedData = {
@@ -387,7 +387,7 @@ document.addEventListener("DOMContentLoaded", () => {
         // Copy image item
         const img = selectedItem.querySelector("img");
         if (!img) return;
-  
+
         copiedData = {
           type: "image",
           src: img.src,
@@ -404,12 +404,13 @@ document.addEventListener("DOMContentLoaded", () => {
           top: selectedItem.offsetTop,
         };
       }
-  
+
       if (copiedData) clipboard.items.push(copiedData);
     });
-  
-    clipboard.type = clipboard.items.length > 0 ? clipboard.items[0].type : null;
-  
+
+    clipboard.type =
+      clipboard.items.length > 0 ? clipboard.items[0].type : null;
+
     if (clipboard.items.length > 0) {
       console.log(`${clipboard.items.length} item(s) copied!`);
       lastPastedBottom = Math.max(
@@ -419,38 +420,38 @@ document.addEventListener("DOMContentLoaded", () => {
       alert("Please select at least one item to copy.");
     }
   }
-  
+
   function pasteItem() {
     if (clipboard.items.length === 0) {
       console.log("Nothing to paste!");
       return;
     }
-  
+
     document.querySelectorAll(".selected-item").forEach((selectedItem) => {
       selectedItem.classList.remove("selected-item");
       removeResizeHandles(selectedItem);
     });
-  
+
     const MinOffset = 15; // Minimum space between pastes
     let offsetMultiplier = pasteCount; // Use paste count to calculate offset
-  
+
     clipboard.items.forEach((copiedItem) => {
       let newElement = null;
       let x = copiedItem.left; // Maintain the same x position
-      let y = Number(copiedItem.top) + 
-              (Number(copiedItem.height ?? 0) + MinOffset) * offsetMultiplier;
-  
+      let y =
+        Number(copiedItem.top) +
+        (Number(copiedItem.height ?? 0) + MinOffset) * offsetMultiplier;
+
       if (copiedItem.type === "text") {
         // Create new textbox
         newElement = createTextbox(x, y, copiedItem.content, copiedItem.name);
-  
+
         // Apply copied styles
         newElement.style.fontSize = copiedItem.fontSize;
         newElement.style.color = copiedItem.fontColor;
         newElement.style.textAlign = copiedItem.textAlign;
         newElement.style.width = copiedItem.width - 10 + "px";
         newElement.style.height = copiedItem.height - 10 + "px";
-        
       } else if (copiedItem.type === "image") {
         // Create new image container
         newElement = createImageContainer(copiedItem.src);
@@ -458,20 +459,20 @@ document.addEventListener("DOMContentLoaded", () => {
         newElement.style.top = y + "px";
         newElement.style.width = copiedItem.width + "px";
         newElement.style.height = copiedItem.height + "px";
-  
+
         canvas.appendChild(newElement);
       } else if (copiedItem.type === "horizontal-line") {
         // Create new horizontal line
         newElement = createHr(x, y);
         newElement.style.width = copiedItem.width + "px";
       }
-  
+
       if (newElement) {
         selectItem(newElement, true); // Keep newly pasted items selected
         lastPastedBottom = y + (newElement.offsetHeight || 2); // Update last pasted position
       }
     });
-  
+
     pasteCount++; // Increment paste count after each paste operation
     console.log(`${clipboard.items.length} item(s) pasted!`);
   }
@@ -597,18 +598,18 @@ document.addEventListener("DOMContentLoaded", () => {
   enableGroupMovement();
   enableKeyboardMovement();
 
-  function startDrawImg(){
+  function startDrawImg() {
     isDrawing = true;
     currentDrawMode = "img";
   }
 
-  function addImageUrl(x, y,imageUrl) {
-      const imgContainer = createImageContainer(imageUrl);
-      console.log(imgContainer);
-      canvas.appendChild(imgContainer);
-      imgContainer.style.left = `${x}px`;
-      imgContainer.style.top = `${y}px`;
-      isDrawing = false;
+  function addImageUrl(x, y, imageUrl) {
+    const imgContainer = createImageContainer(imageUrl);
+    console.log(imgContainer);
+    canvas.appendChild(imgContainer);
+    imgContainer.style.left = `${x}px`;
+    imgContainer.style.top = `${y}px`;
+    isDrawing = false;
   }
 
   function createImageContainer(imageUrl) {
@@ -659,22 +660,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return imgContainer;
   }
- function updateLastImage() {
+  function updateLastImage() {
     const imgContainers = document.querySelectorAll(".image-container");
     if (imgContainers.length > 0) {
-        const lastContainer = imgContainers[imgContainers.length - 1];
-        const img = lastContainer.querySelector("img");
-        const newImageUrl = document.getElementById("ImgSrc").value;
+      const lastContainer = imgContainers[imgContainers.length - 1];
+      const img = lastContainer.querySelector("img");
+      const newImageUrl = document.getElementById("ImgSrc").value;
 
-        img.onload = function() {
-            console.log("Image updated and fully loaded.");
-        };
+      img.onload = function () {
+        console.log("Image updated and fully loaded.");
+      };
 
-        img.src = newImageUrl;
+      img.src = newImageUrl;
     } else {
-        alert("No image found to update!");
+      alert("No image found to update!");
     }
-}
+  }
 
   function isValidUrl(url) {
     const pattern = new RegExp("^(https?|ftp)://[^\\s/$.?#].[^\\s]*$", "i");
@@ -1093,14 +1094,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const mouseY = event.clientY - rect.top;
 
     if (currentDrawMode === "textbox") {
-    
-        createTextbox(mouseX, mouseY, 'text');
-      
+      createTextbox(mouseX, mouseY, "text");
     } else if (currentDrawMode === "hr") {
       createHr(mouseX, mouseY);
-    }
-    else if (currentDrawMode === "img") {
-      addImageUrl(mouseX,mouseY,"https://dummyimage.com/600x400/000/fff.jpg");
+    } else if (currentDrawMode === "img") {
+      addImageUrl(mouseX, mouseY, "https://dummyimage.com/600x400/000/fff.jpg");
       console.log("import img");
     }
 
@@ -1124,28 +1122,38 @@ document.addEventListener("DOMContentLoaded", () => {
     // Get all items (excluding the template image)
     const items = Array.from(canvas.children)
       .filter((item) => item.id !== "templateImage")
-      .map((item) => ({
-        type: item.tagName.toLowerCase(),
-        src:
-          item.tagName.toLowerCase() === "div" &&
-          item.classList.contains("image-container")
-            ? item.querySelector("img")?.src
+      .map((item) => {
+        const itemData = {
+          type: item.tagName.toLowerCase(),
+          src:
+            item.tagName.toLowerCase() === "div" &&
+            item.classList.contains("image-container")
+              ? item.querySelector("img")?.src
+              : undefined,
+          textBoxName: item.classList.contains("text-item")
+            ? item.dataset.name
             : undefined,
-        textBoxName: item.classList.contains("text-item")
-          ? item.dataset.name
-          : undefined,
-        text: item.classList.contains("text-item")
-          ? item.textContent
-          : undefined,
-        x: item.offsetLeft,
-        y: item.offsetTop,
-        width: item.offsetWidth,
-        height: item.offsetHeight,
-        zIndex: item.style.zIndex || "auto",
-        fontSize: item.style.fontSize || "16px",
-        fontColor: item.style.color || "#000000",
-        textAlign: item.style.textAlign || "left",
-      }));
+          text: item.classList.contains("text-item")
+            ? item.textContent
+            : undefined,
+          x: item.offsetLeft,
+          y: item.offsetTop,
+          width: item.offsetWidth,
+          height: item.offsetHeight,
+          zIndex: item.style.zIndex || "auto",
+          fontSize: item.style.fontSize || "16px",
+          fontColor: item.style.color || "#000000",
+          textAlign: item.style.textAlign || "left",
+        };
+
+        // Filter out empty or non-visible divs (e.g., with width and height as 0)
+        if (itemData.type === "div" && (itemData.width === 0 || itemData.height === 0)) {
+          return null; // Exclude this item
+        }
+
+        return itemData;
+      })
+      .filter(item => item !== null); // Remove null items (empty divs)
 
     // Create the config object
     const config = {
@@ -1165,7 +1173,8 @@ document.addEventListener("DOMContentLoaded", () => {
     a.href = url;
     a.download = "config.json";
     a.click();
-  }
+}
+
 
   function importConfig(event) {
     const file = event.target.files[0];
@@ -1220,6 +1229,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 textbox.style.zIndex = item.zIndex || "auto";
               }
             }
+            //add horizontal type
+            else if (item.type === "div") {
+              const hr = createHr(item.x, item.y);
+              hr.style.left = `${item.x}px`;
+              hr.style.top = `${item.y}px`;
+              hr.style.width = `${item.width || 300}px`; // ใช้ค่าจาก JSON ถ้ามี
+            }
           });
 
           // If PDF info is available in the config, update PDF controls
@@ -1244,7 +1260,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return await doc.embedFont(PDFLib.StandardFonts.Helvetica);
   }
 
-  function exportPdf(){
+  function exportPdf() {
     console.log("save file locally");
   }
 
