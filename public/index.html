@@ -19,7 +19,8 @@
       <button id="exportConfig">Export Config</button>
       <button id="importConfig">Import Config</button>
       <input type="file" id="importFile" style="display: none" />
-      <button id="createPDF">Create PDF</button>
+      <button id="previewPdf">Preview PDF</button>
+      <button id="exportPdf">Export PDF</button>
       <button id="copyItem" class="btn btn-secondary">Copy</button>
 <button id="pasteItem" class="btn btn-secondary">Paste</button>
     </div>
@@ -49,7 +50,8 @@
       <br><br>
       <p>Type: <span id="type">Textbox</span></p>
       <p>Number: <span id="number">Loading...</span></p>
-
+        <label>Image Src: <input id="ImgSrc" type="text"></label>
+        <button id="updateLastImage">Update Last Image</button>
       <script>
         // Extract ID from the URL
         const pathParts = window.location.pathname.split("/");

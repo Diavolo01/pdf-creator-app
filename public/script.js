@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportConfigButton = document.getElementById("exportConfig");
   const importConfigButton = document.getElementById("importConfig");
   const importFileInput = document.getElementById("importFile");
-  const createPdfButton = document.getElementById("createPDF");
+  const previewPdfButton = document.getElementById("previewPdf");
   const addTemplateButton = document.getElementById("addTemplate");
   const startDrawButton = document.getElementById("startDraw");
   const prevPageButton = document.getElementById("prevPage");
@@ -15,6 +15,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const copyButton = document.getElementById("copyItem");
   const pasteButton = document.getElementById("pasteItem");
   const drawHRline = document.getElementById("createHr");
+  const exportpdfbutton = document.getElementById("exportPdf");
+  const updatedImagebutton = document.getElementById("updateLastImage");
   let isDrawing = false;
 
   // PDF navigation variables
@@ -30,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
   exportConfigButton.addEventListener("click", exportConfig);
   importConfigButton.addEventListener("click", () => importFileInput.click());
   importFileInput.addEventListener("change", importConfig);
-  createPdfButton.addEventListener("click", createPdf);
+  previewPdfButton.addEventListener("click", previewPdf);
   addTemplateButton.addEventListener("click", addTemplate);
   startDrawButton.addEventListener("click", startDrawing);
   canvas.addEventListener("click", handleCanvasClick);
@@ -39,6 +41,8 @@ document.addEventListener("DOMContentLoaded", () => {
   copyButton.addEventListener("click", copySelectedItem);
   pasteButton.addEventListener("click", pasteItem);
   drawHRline.addEventListener("click", startDrawHr);
+  exportpdfbutton.addEventListener("click",exportPdf);
+  updatedImagebutton.addEventListener("click", updateLastImage)
 
   const selectionBox = document.createElement("div");
   selectionBox.id = "selection-box";
@@ -116,8 +120,8 @@ document.addEventListener("DOMContentLoaded", () => {
     items.forEach((item) => {
       item.classList.add("selected-item");
       selectItem(item, true);
-      console.log(item);
-      console.log(isSelecting);
+      // console.log(item);
+      // console.log(isSelecting);
     });
     if (items.length > 0) {
       document
@@ -611,12 +615,15 @@ document.addEventListener("DOMContentLoaded", () => {
     const imgContainer = document.createElement("div");
     imgContainer.classList.add("image-container");
     imgContainer.style.position = "absolute";
-    imgContainer.style.left = "50px";
-    imgContainer.style.top = "50px";
+    // imgContainer.style.left = "50px";
+    // imgContainer.style.top = "50px";
     imgContainer.style.width = "150px";
     imgContainer.style.height = "150px";
     makeRemovable(imgContainer);
     const img = document.createElement("img");
+    img.src = imageUrl;
+    img.style.width = "100%";
+    img.style.height = "100%";
 
     // Check if the image URL is from a remote source
     if (isValidUrl(imageUrl)) {
@@ -652,6 +659,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return imgContainer;
   }
+ function updateLastImage() {
+    const imgContainers = document.querySelectorAll(".image-container");
+    if (imgContainers.length > 0) {
+        const lastContainer = imgContainers[imgContainers.length - 1];
+        const img = lastContainer.querySelector("img");
+        const newImageUrl = document.getElementById("ImgSrc").value;
+
+        img.onload = function() {
+            console.log("Image updated and fully loaded.");
+        };
+
+        img.src = newImageUrl;
+    } else {
+        alert("No image found to update!");
+    }
+}
+
   function isValidUrl(url) {
     const pattern = new RegExp("^(https?|ftp)://[^\\s/$.?#].[^\\s]*$", "i");
     return pattern.test(url);
@@ -1220,7 +1244,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return await doc.embedFont(PDFLib.StandardFonts.Helvetica);
   }
 
-  async function createPdf() {
+  function exportPdf(){
+    console.log("save file locally");
+  }
+
+  async function previewPdf() {
     // If no PDFLib document is available, create one
     if (!pdfLibDoc) {
       // Create a new PDF document with the same dimensions as the canvas
@@ -1372,13 +1400,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
     }
-    // page.drawLine({
-    //   start: { x: 50, y: 740 },
-    //   end: { x: 550, y: 740 },
-    //   thickness: 2,
-    //   color: PDFLib.rgb(0, 0, 0),
-    // });
-
     // Save the PDF
     const pdfBytes = await workingPdfDoc.save();
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
