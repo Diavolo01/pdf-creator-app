@@ -660,22 +660,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return imgContainer;
   }
-  function updateLastImage() {
+  function updateLastImage() { 
     const imgContainers = document.querySelectorAll(".image-container");
     if (imgContainers.length > 0) {
-      const lastContainer = imgContainers[imgContainers.length - 1];
-      const img = lastContainer.querySelector("img");
-      const newImageUrl = document.getElementById("ImgSrc").value;
+        const lastContainer = imgContainers[imgContainers.length - 1];
+        const img = lastContainer.querySelector("img");
+        const newImageUrl = document.getElementById("ImgSrc").value;
 
-      img.onload = function () {
-        console.log("Image updated and fully loaded.");
-      };
-
-      img.src = newImageUrl;
+        // ตรวจสอบว่า newImageUrl เป็น URL หรือ Base64
+        if (newImageUrl.startsWith("data:image/")) {
+            // ถ้าเป็น Base64 อยู่แล้ว ให้อัปเดตทันที
+            img.src = newImageUrl;
+        } else {
+            // ถ้าเป็น URL ต้องแปลงเป็น Base64 ก่อน
+            convertImageToBase64(newImageUrl).then(base64 => {
+                img.src = base64;
+            }).catch(error => {
+                console.error("Error converting image to base64:", error);
+            });
+        }
     } else {
-      alert("No image found to update!");
+        alert("No image found to update!");
     }
-  }
+}
+
+// // ฟังก์ชันแปลง URL เป็น Base64
+// function convertImageToBase64(url) {
+//     return new Promise((resolve, reject) => {
+//         fetch(url)
+//             .then(response => response.blob())
+//             .then(blob => {
+//                 const reader = new FileReader();
+//                 reader.onloadend = () => resolve(reader.result);
+//                 reader.onerror = reject;
+//                 reader.readAsDataURL(blob);
+//             })
+//             .catch(reject);
+//     });
+// }
 
   function isValidUrl(url) {
     const pattern = new RegExp("^(https?|ftp)://[^\\s/$.?#].[^\\s]*$", "i");
@@ -1332,7 +1354,8 @@ document.addEventListener("DOMContentLoaded", () => {
             } else if (img.src.startsWith("data:image/jpeg;base64,")) {
               const base64Data = img.src.split(",")[1];
               embeddedImage = await workingPdfDoc.embedJpg(base64Data);
-            } else {
+            }
+             else {
               console.warn("Unsupported image format:", img.src);
               continue;
             }
