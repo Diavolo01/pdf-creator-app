@@ -605,7 +605,6 @@ document.addEventListener("DOMContentLoaded", () => {
     isDrawing = true;
     currentDrawMode = "img";
   }
-  let imageCounter = 0;
 
   function addImageUrl(x, y, imageUrl) {
     const imgContainer = createImageContainer(imageUrl);
@@ -613,11 +612,7 @@ document.addEventListener("DOMContentLoaded", () => {
     canvas.appendChild(imgContainer);
     imgContainer.style.left = `${x}px`;
     imgContainer.style.top = `${y}px`;
-    imgContainer.dataset.id = `image-${imageCounter}`;
-    imgContainer.id = `image-${imageCounter}`;
-    imageCounter ++;
     isDrawing = false;
-    console.log(imageCounter);
   }
 
   function createImageContainer(imageUrl) {
