@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", () => {
   pasteButton.addEventListener("click", pasteItem);
   drawHRline.addEventListener("click", startDrawHr);
   exportpdfbutton.addEventListener("click", exportPdf);
-  updatedImagebutton.addEventListener("click", updateLastImage);
+  updatedImagebutton.addEventListener("click", updateSelectedImage);
 
   const selectionBox = document.createElement("div");
   selectionBox.id = "selection-box";
@@ -71,6 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
       selectionBox.style.width = "0px";
       selectionBox.style.height = "0px";
       selectionBox.style.display = "block";
+      selectionBox.style.zIndex= "1";
     }
   });
 
@@ -120,8 +121,10 @@ document.addEventListener("DOMContentLoaded", () => {
     items.forEach((item) => {
       item.classList.add("selected-item");
       selectItem(item, true);
-      // console.log(item);
+      console.log(item);
       // console.log(isSelecting);
+      console.log("Selection Box State:", selectionBox.style.display);
+
     });
     if (items.length > 0) {
       document
@@ -602,6 +605,7 @@ document.addEventListener("DOMContentLoaded", () => {
     isDrawing = true;
     currentDrawMode = "img";
   }
+  let imageCounter = 0;
 
   function addImageUrl(x, y, imageUrl) {
     const imgContainer = createImageContainer(imageUrl);
@@ -609,7 +613,11 @@ document.addEventListener("DOMContentLoaded", () => {
     canvas.appendChild(imgContainer);
     imgContainer.style.left = `${x}px`;
     imgContainer.style.top = `${y}px`;
+    imgContainer.dataset.id = `image-${imageCounter}`;
+    imgContainer.id = `image-${imageCounter}`;
+    imageCounter ++;
     isDrawing = false;
+    console.log(imageCounter);
   }
 
   function createImageContainer(imageUrl) {
@@ -660,30 +668,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
     return imgContainer;
   }
-  function updateLastImage() { 
-    const imgContainers = document.querySelectorAll(".image-container");
-    if (imgContainers.length > 0) {
-        const lastContainer = imgContainers[imgContainers.length - 1];
-        const img = lastContainer.querySelector("img");
-        const newImageUrl = document.getElementById("ImgSrc").value;
-
-        // ตรวจสอบว่า newImageUrl เป็น URL หรือ Base64
-        if (newImageUrl.startsWith("data:image/")) {
-            // ถ้าเป็น Base64 อยู่แล้ว ให้อัปเดตทันที
-            img.src = newImageUrl;
-        } else {
-            // ถ้าเป็น URL ต้องแปลงเป็น Base64 ก่อน
-            convertImageToBase64(newImageUrl).then(base64 => {
-                img.src = base64;
-            }).catch(error => {
-                console.error("Error converting image to base64:", error);
-            });
-        }
+  function updateSelectedImage() {
+    // Find the image container with the selected-item class
+    const imgContainer = document.querySelector(".image-container.selected-item");
+    
+    if (imgContainer) {
+      const img = imgContainer.querySelector("img");
+      const newImageUrl = document.getElementById("ImgSrc").value;
+      
+      // ตรวจสอบว่า newImageUrl เป็น URL หรือ Base64
+      if (newImageUrl.startsWith("data:image/")) {
+        // ถ้าเป็น Base64 อยู่แล้ว ให้อัปเดตทันที
+        img.src = newImageUrl;
+      } else {
+        // ถ้าเป็น URL ต้องแปลงเป็น Base64 ก่อน
+        convertImageToBase64(newImageUrl).then(base64 => {
+          img.src = base64;
+        }).catch(error => {
+          console.error("Error converting image to base64:", error);
+        });
+      }
     } else {
-        alert("No image found to update!");
+      alert("No image selected! Please select an image first.");
     }
-}
-
+  }
 // // ฟังก์ชันแปลง URL เป็น Base64
 // function convertImageToBase64(url) {
 //     return new Promise((resolve, reject) => {
@@ -1235,7 +1243,7 @@ document.addEventListener("DOMContentLoaded", () => {
               imgContainer.style.top = `${item.y}px`;
               imgContainer.style.width = `${item.width}px`;
               imgContainer.style.height = `${item.height}px`;
-              imgContainer.style.zIndex = item.zIndex || "auto";
+              imgContainer.style.zIndex = "1";
               canvas.appendChild(imgContainer);
             } else if (item.text) {
               createTextbox(item.x, item.y, item.text, item.textBoxName);
@@ -1248,7 +1256,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 textbox.style.fontSize = item.fontSize || "16px";
                 textbox.style.color = item.fontColor || "#000000";
                 textbox.style.textAlign = item.textAlign || "left";
-                textbox.style.zIndex = item.zIndex || "auto";
+                textbox.style.zIndex = "1";
               }
             }
             //add horizontal type
@@ -1281,7 +1289,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Embed a standard font
     return await doc.embedFont(PDFLib.StandardFonts.Helvetica);
   }
-
+  //without Elements
   async function exportPdf() {
     if (!pdfLibDoc) {
       // Create a new PDF document with the same dimensions as the canvas
@@ -1320,6 +1328,7 @@ document.addEventListener("DOMContentLoaded", () => {
     URL.revokeObjectURL(url);
   }
 
+  //with Elements
   async function previewPdf() {
     // If no PDFLib document is available, create one
     if (!pdfLibDoc) {
