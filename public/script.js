@@ -173,6 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   });
+
   function removeResizeHandles(element) {
     const handles = element.querySelectorAll(".resize-handle");
     handles.forEach((handle) => handle.remove());
@@ -1228,6 +1229,7 @@ document.addEventListener("DOMContentLoaded", () => {
             templateImg.style.zIndex = "-1";
             templateImg.src = config.templateSrc;
             canvas.appendChild(templateImg);
+            canvas.appendChild(selectionBox);
           }
 
           // Add all items back to the canvas
@@ -1278,6 +1280,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       };
       reader.readAsText(file);
+
     }
   }
   async function embedFont(doc) {
