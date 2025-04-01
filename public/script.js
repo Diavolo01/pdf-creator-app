@@ -1191,28 +1191,28 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     // // Save the config as a JSON file
-    // const blob = new Blob([JSON.stringify(config, null, 2)], {
-    //   type: "application/json",
-    // });
-    // const url = URL.createObjectURL(blob);
-    // const a = document.createElement("a");
-    // a.href = url;
-    // a.download = "config.json";
-    // a.click();
-    fetch("http://localhost:3000/save-config", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(config),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Config saved successfully:", data);
-      })
-      .catch((error) => {
-        console.error("Error saving config:", error);
-      });
+    const blob = new Blob([JSON.stringify(config, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "config.json";
+    a.click();
+    // fetch("http://localhost:3000/save-config", {
+    //   method: "POST",
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    //   body: JSON.stringify(config),
+    // })
+    //   .then((response) => response.json())
+    //   .then((data) => {
+    //     console.log("Config saved successfully:", data);
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error saving config:", error);
+    //   });
 }
 
 
@@ -1294,7 +1294,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       };
       reader.readAsText(file);
-
     }
   }
   async function embedFont(doc) {
