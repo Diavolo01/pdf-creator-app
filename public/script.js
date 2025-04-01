@@ -1130,7 +1130,12 @@ document.addEventListener("DOMContentLoaded", () => {
     currentDrawMode = null; // Reset drawing mode
   }
 
-  function exportConfig() {
+  async function exportConfig() {
+    await exportPdf();
+    if (!uploadedUUID) {
+      console.error("Error: No UUID found. Upload a PDF first.");
+      return;
+    }
     // Get template image info (if exists)
     const templateImg = document.getElementById("templateImage");
     let templateSrc = null;
@@ -1181,37 +1186,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Create the config object
     const config = {
+      uuid: uploadedUUID,
       canvasWidth,
       canvasHeight,
       items,
       pdfInfo: currentPdf ? { currentPage, totalPages } : null,
       // templateSrc: templateSrc,
     };
-    exportPdf();
-    // // Save the config as a JSON file
-
-    // const blob = new Blob([JSON.stringify(config, null, 2)], {
-    //   type: "application/json",
-    // });
-    // const url = URL.createObjectURL(blob);
-    // const a = document.createElement("a");
-    // a.href = url;
-    // a.download = "config.json";
-    // a.click();
-    fetch("http://localhost:3000/save-config", {
+    config.uuid = uploadedUUID; 
+    const response = await fetch("http://localhost:3000/save-config", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(config),
     })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Config saved successfully:", data);
-      })
-      .catch((error) => {
-        console.error("Error saving config:", error);
-      });
+    const data = await response.json();
+    console.log("Config saved successfully:", data);
 }
 
 
@@ -1299,6 +1290,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Embed a standard font
     return await doc.embedFont(PDFLib.StandardFonts.Helvetica);
   }
+  let uploadedUUID = ""; 
   //without Elements
   async function exportPdf() {
     if (!pdfLibDoc) {
@@ -1335,9 +1327,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const result = await response.json();
       console.log("Server response:", result);
+      if (result.uuid) {
+        uploadedUUID = result.uuid; // Save UUID globally for later use
+    }
+    else {
+        console.error("UUID not found in server response.");
+      }
     } catch (error) {
       console.error("Error uploading PDF:", error);
     }
+    
 }
 
   //with Elements
