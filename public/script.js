@@ -15,7 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const copyButton = document.getElementById("copyItem");
   const pasteButton = document.getElementById("pasteItem");
   const drawHRline = document.getElementById("createHr");
-  const exportpdfbutton = document.getElementById("exportPdf");
   const updatedImagebutton = document.getElementById("updateLastImage");
   let isDrawing = false;
 
@@ -41,7 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
   copyButton.addEventListener("click", copySelectedItem);
   pasteButton.addEventListener("click", pasteItem);
   drawHRline.addEventListener("click", startDrawHr);
-  exportpdfbutton.addEventListener("click", exportPdf);
   updatedImagebutton.addEventListener("click", updateSelectedImage);
 
   const selectionBox = document.createElement("div");
@@ -1189,11 +1187,12 @@ document.addEventListener("DOMContentLoaded", () => {
       pdfInfo: currentPdf ? { currentPage, totalPages } : null,
       // templateSrc: templateSrc,
     };
-
+    exportPdf();
     // // Save the config as a JSON file
-    const blob = new Blob([JSON.stringify(config, null, 2)], {
-      type: "application/json",
-    });
+
+    // const blob = new Blob([JSON.stringify(config, null, 2)], {
+    //   type: "application/json",
+    // });
     // const url = URL.createObjectURL(blob);
     // const a = document.createElement("a");
     // a.href = url;
