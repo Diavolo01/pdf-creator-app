@@ -1187,32 +1187,32 @@ document.addEventListener("DOMContentLoaded", () => {
       canvasHeight,
       items,
       pdfInfo: currentPdf ? { currentPage, totalPages } : null,
-      templateSrc: templateSrc,
+      // templateSrc: templateSrc,
     };
 
     // // Save the config as a JSON file
     const blob = new Blob([JSON.stringify(config, null, 2)], {
       type: "application/json",
     });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "config.json";
-    a.click();
-    // fetch("http://localhost:3000/save-config", {
-    //   method: "POST",
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    //   body: JSON.stringify(config),
-    // })
-    //   .then((response) => response.json())
-    //   .then((data) => {
-    //     console.log("Config saved successfully:", data);
-    //   })
-    //   .catch((error) => {
-    //     console.error("Error saving config:", error);
-    //   });
+    // const url = URL.createObjectURL(blob);
+    // const a = document.createElement("a");
+    // a.href = url;
+    // a.download = "config.json";
+    // a.click();
+    fetch("http://localhost:3000/save-config", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(config),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        console.log("Config saved successfully:", data);
+      })
+      .catch((error) => {
+        console.error("Error saving config:", error);
+      });
 }
 
 
@@ -1232,7 +1232,7 @@ document.addEventListener("DOMContentLoaded", () => {
             canvas.style.width = `${config.canvasWidth}px`;
             canvas.style.height = `${config.canvasHeight}px`;
           }
-
+          canvas.appendChild(selectionBox);
           // Restore template image if it exists in the config
           if (config.templateSrc) {
             const templateImg = document.createElement("img");

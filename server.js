@@ -20,7 +20,7 @@ app.get("/edit/:id", (req, res) => {
 
 app.post("/save-config", (req, res) => {
   const configData = req.body;
-  const filePath = path.join(__dirname, "files/json/config.json");
+  const filePath = path.join(__dirname, "public/files/json/config.json");
 
   fs.writeFile(filePath, JSON.stringify(configData, null, 2), "utf8", (err) => {
     if (err) {
