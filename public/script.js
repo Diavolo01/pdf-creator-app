@@ -1303,17 +1303,14 @@ document.addEventListener("DOMContentLoaded", () => {
   //without Elements
   async function exportPdf() {
     if (!pdfLibDoc) {
-      // Create a new PDF document with the same dimensions as the canvas
       const canvasWidth = parseFloat(canvas.style.width);
       const canvasHeight = parseFloat(canvas.style.height);
       pdfLibDoc = await PDFLib.PDFDocument.create();
       pdfLibDoc.addPage([canvasWidth, canvasHeight]);
     }
 
-    // If we have a multi-page PDF, work with the current page only
     let workingPdfDoc;
     if (currentPdf && totalPages > 1) {
-      // Create a new PDF with just the current page
       workingPdfDoc = await PDFLib.PDFDocument.create();
       const [copiedPage] = await workingPdfDoc.copyPages(pdfLibDoc, [
         currentPage - 1,
@@ -1323,21 +1320,26 @@ document.addEventListener("DOMContentLoaded", () => {
       workingPdfDoc = pdfLibDoc;
     }
 
-    // Get the page we're working with
-    const pages = workingPdfDoc.getPages();
-    const page = pages[0];
-    const { width, height } = page.getSize();
-
+    // Convert PDF to binary
     const pdfBytes = await workingPdfDoc.save();
-    const blob = new Blob([pdfBytes], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    // a.download = "layout.pdf";
-    a.target = "_blank"; // Open in a new tab
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+    const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
+
+    // Send to backend
+    const formData = new FormData();
+    formData.append("pdfFile", pdfBlob, "layout.pdf");
+
+    try {
+      const response = await fetch("http://localhost:3000/upload-pdf", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      console.log("Server response:", result);
+    } catch (error) {
+      console.error("Error uploading PDF:", error);
+    }
+}
 
   //with Elements
   async function previewPdf() {
