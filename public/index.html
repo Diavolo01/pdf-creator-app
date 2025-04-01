@@ -49,24 +49,21 @@
       <label>Position Y: <input id="posY" type="number"></label>
       <br><br>
       <p>Type: <span id="type">Textbox</span></p>
-      <p>Number: <span id="number">Loading...</span></p>
+      <p>Number: <span id="number-display">Loading...</span></p>
         <label>Image Src: <input id="ImgSrc" type="text"></label>
         <button id="updateLastImage">Update Last Image</button>
-      <script>
-        // Extract ID from the URL
-        const pathParts = window.location.pathname.split("/");
-        if (pathParts[1] === "edit" && pathParts[2]) {
-            const id = pathParts[2];
-            document.addEventListener("DOMContentLoaded", function () {
-          fetch(`/edit/${id}/data`)
-              .then(response => response.json())
-              .then(data => {
-                  document.getElementById("number").textContent = data.number;
-              })
-              .catch(error => console.error("Error fetching data:", error));
-      });
-        }
-    </script>
+        <script>
+          // Extract number from the URL
+          const pathSegments = window.location.pathname.split("/");
+          const number = pathSegments[2]; // Get the number from "/edit/123"
+  
+          // Display the number if it's valid
+          if (!isNaN(number)) {
+              document.getElementById("number-display").textContent = `Number: ${number}`;
+          } else {
+              document.getElementById("number-display").textContent = "No number found";
+          }
+      </script>
   </div>
   
       

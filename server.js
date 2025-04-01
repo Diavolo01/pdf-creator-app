@@ -10,29 +10,25 @@ const app = express();
 app.use(cors());
 const port = process.env.PORT || 3000;
 
-// Create a connection to the MySQL database
-// const db = mysql.createConnection({
-//   host: process.env.DB_HOST,
-//   user: process.env.DB_USER,
-//   password: process.env.DB_PASSWORD,
-//   database: process.env.DB_NAME,
-// });
-
-// // Connect to the database
-// db.connect((err) => {
-//   if (err) {
-//     console.error("Error connecting to the database: ", err);
-//     return;
-//   }
-//   console.log("Connected to the MySQL database!");
-// });
-
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
-
+app.use("/edit", express.static(path.join(__dirname, "public")));
 
 app.get("/edit/:id", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
+});
+
+app.post("/save-config", (req, res) => {
+  const configData = req.body;
+  const filePath = path.join(__dirname, "files/json/config.json");
+
+  fs.writeFile(filePath, JSON.stringify(configData, null, 2), "utf8", (err) => {
+    if (err) {
+      console.error("Error writing JSON file:", err);
+      return res.status(500).json({ message: "Failed to save config" });
+    }
+    res.json({ message: "Config saved successfully!" });
+  });
 });
 
 // Start the server
