@@ -25,7 +25,8 @@ const generateUUID = (req, res, next) => {
   next();
 };
 
-const storage = multer.diskStorage({
+// Storage for PDF files
+const pdfStorage = multer.diskStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, "public/files/upload");
     if (!fs.existsSync(uploadPath)) {
@@ -34,39 +35,46 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    cb(null, `${req.uuid}.pdf`); // Use the same UUID for the file
-  }
+    req.uuid = req.uuid; // Ensure UUID is set
+    cb(null, `${req.uuid}.pdf`); // Name PDF using UUID
+  },
 });
 
-const upload = multer({ storage });
+// Storage for JSON config files
+const jsonStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, "public/files/upload");
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    req.uuid = req.uuid; // Use provided UUID or generate one
+    cb(null, `${req.uuid}.json`); // Name JSON file using UUID
+  },
+});
+
+// Upload handlers
+const uploadPDF = multer({ storage: pdfStorage });
+const uploadJSON = multer({ storage: jsonStorage });
 
 // API endpoint to handle PDF upload
-app.post("/upload-pdf", generateUUID, upload.single("pdfFile"), (req, res) => {
+app.post("/upload-pdf", generateUUID, uploadPDF.single("pdfFile"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });
   }
   res.json({ message: "PDF saved successfully", filename: req.file.filename, uuid: req.uuid });
 });
 
-// API endpoint to save config with the same UUID
-app.post("/save-config", (req, res) => {
-  const config = req.body;
-  const uuid = config.uuid;
-
-  if (!uuid) {
-    return res.status(400).json({ message: "UUID is required" });
+// API endpoint to save config JSON file
+app.post("/save-config", generateUUID,uploadJSON.single("jsonFile"), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ message: "No config file uploaded" });
   }
 
-  const filePath = path.join(__dirname, "public/files/upload", `${uuid}.json`);
-  fs.writeFile(filePath, JSON.stringify(config, null, 2), "utf8", (err) => {
-    if (err) {
-      console.error("Error writing JSON file:", err);
-      return res.status(500).json({ message: "Failed to save config" });
-    }
-    res.json({ message: "Config saved successfully!", filename: `${uuid}.json` });
-  });
+  res.json({ message: "Config saved successfully!", filename: req.file.filename, uuid: req.uuid });
 });
-
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

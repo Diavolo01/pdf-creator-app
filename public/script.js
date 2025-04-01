@@ -1193,18 +1193,24 @@ document.addEventListener("DOMContentLoaded", () => {
       pdfInfo: currentPdf ? { currentPage, totalPages } : null,
       // templateSrc: templateSrc,
     };
-    config.uuid = uploadedUUID; 
+    const jsonString = JSON.stringify(config, null, 2);
+    const jsonBlob = new Blob([jsonString], { type: "application/json" });
+    jsonString.uuid = uploadedUUID;
+    const formData = new FormData();
+    formData.append("jsonFile", jsonBlob, "Config.json");
+
     const response = await fetch("http://localhost:3000/save-config", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(config),
+      body: formData,
     })
-    const data = await response.json();
-    console.log("Config saved successfully:", data);
-}
-
+    console.log(typeof jsonBlob); // ควรได้ "object"
+console.log(jsonBlob instanceof Blob); // ควรได้ true
+console.log(jsonBlob.size); // แสดงขนาดของ Blob (ควรมากกว่า 0)
+console.log(jsonBlob.type); 
+   
+const result = await response.json();
+console.log("Server response:", result);
+  }
 
   function importConfig(event) {
     const file = event.target.files[0];
