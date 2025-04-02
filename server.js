@@ -4,7 +4,6 @@ const dotenv = require("dotenv");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
-const crypto = require("crypto");
 
 dotenv.config();
 const app = express();
@@ -12,6 +11,8 @@ app.use(cors());
 const port = process.env.PORT || 3000;
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Ensure form data is parsed
+
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/edit", express.static(path.join(__dirname, "public")));
 
@@ -19,62 +20,46 @@ app.get("/edit/:id", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-// Middleware to generate a UUID for each request
-const generateUUID = (req, res, next) => {
-  req.uuid = crypto.randomUUID(); // Generate a unique identifier
-  next();
-};
+// Ensure the upload directory exists
+const uploadPath = path.join(__dirname, "public/files/upload");
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath, { recursive: true });
+}
 
-// Storage for PDF files
-const pdfStorage = multer.diskStorage({
+// Storage configuration
+const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "public/files/upload");
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true }); // Ensure the directory exists
-    }
     cb(null, uploadPath);
   },
   filename: (req, file, cb) => {
-    req.uuid = req.uuid; // Ensure UUID is set
-    cb(null, `${req.uuid}.pdf`); // Name PDF using UUID
-  },
-});
-
-// Storage for JSON config files
-const jsonStorage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, "public/files/upload");
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
+    const uuid = req.query.uuid; // Get UUID from query instead of body
+    if (!uuid) {
+      return cb(new Error("UUID is required"), null);
     }
-    cb(null, uploadPath);
-  },
-  filename: (req, file, cb) => {
-    req.uuid = req.uuid; // Use provided UUID or generate one
-    cb(null, `${req.uuid}.json`); // Name JSON file using UUID
+    const extension = file.mimetype === "application/pdf" ? "pdf" : "json";
+    cb(null, `${uuid}.${extension}`);
   },
 });
 
 // Upload handlers
-const uploadPDF = multer({ storage: pdfStorage });
-const uploadJSON = multer({ storage: jsonStorage });
+const upload = multer({ storage });
 
 // API endpoint to handle PDF upload
-app.post("/upload-pdf", generateUUID, uploadPDF.single("pdfFile"), (req, res) => {
+app.post("/upload-pdf", upload.single("pdfFile"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No file uploaded" });
   }
-  res.json({ message: "PDF saved successfully", filename: req.file.filename, uuid: req.uuid });
+  res.json({ message: "PDF saved successfully", filename: req.file.filename, uuid: req.query.uuid });
 });
 
 // API endpoint to save config JSON file
-app.post("/save-config", generateUUID,uploadJSON.single("jsonFile"), (req, res) => {
+app.post("/save-config", upload.single("jsonFile"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ message: "No config file uploaded" });
   }
-
-  res.json({ message: "Config saved successfully!", filename: req.file.filename, uuid: req.uuid });
+  res.json({ message: "Config saved successfully!", filename: req.file.filename, uuid: req.query.uuid });
 });
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

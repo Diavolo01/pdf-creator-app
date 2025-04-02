@@ -1131,11 +1131,44 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function exportConfig() {
-    await exportPdf();
-    if (!uploadedUUID) {
-      console.error("Error: No UUID found. Upload a PDF first.");
-      return;
+    if (!pdfLibDoc) {
+      const canvasWidth = parseFloat(canvas.style.width);
+      const canvasHeight = parseFloat(canvas.style.height);
+      pdfLibDoc = await PDFLib.PDFDocument.create();
+      pdfLibDoc.addPage([canvasWidth, canvasHeight]);
     }
+
+    let workingPdfDoc;
+    if (currentPdf && totalPages > 1) {
+      workingPdfDoc = await PDFLib.PDFDocument.create();
+      const [copiedPage] = await workingPdfDoc.copyPages(pdfLibDoc, [
+        currentPage - 1,
+      ]);
+      workingPdfDoc.addPage(copiedPage);
+    } else {
+      workingPdfDoc = pdfLibDoc;
+    }
+    const uuid = crypto.randomUUID();
+    // Convert PDF to binary
+    const pdfBytes = await workingPdfDoc.save();
+    const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
+
+    // Send to backend
+    const formDataPdf = new FormData();
+    formDataPdf.append("pdfFile", pdfBlob);
+    try {
+      const response = await fetch(`http://localhost:3000/upload-pdf?uuid=${uuid}`, { 
+        method: "POST",
+        body: formDataPdf,
+      });
+
+      const result = await response.json();
+      console.log("Server response:", result);
+      
+    } catch (error) {
+      console.error("Error uploading PDF:", error);
+    }
+    
     // Get template image info (if exists)
     const templateImg = document.getElementById("templateImage");
     let templateSrc = null;
@@ -1186,7 +1219,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Create the config object
     const config = {
-      uuid: uploadedUUID,
       canvasWidth,
       canvasHeight,
       items,
@@ -1195,13 +1227,11 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     const jsonString = JSON.stringify(config, null, 2);
     const jsonBlob = new Blob([jsonString], { type: "application/json" });
-    jsonString.uuid = uploadedUUID;
-    const formData = new FormData();
-    formData.append("jsonFile", jsonBlob, "Config.json");
-
-    const response = await fetch("http://localhost:3000/save-config", {
+    const formDataJson = new FormData();
+    formDataJson.append("jsonFile", jsonBlob);
+    const response = await fetch(`http://localhost:3000/save-config?uuid=${uuid}`, { 
       method: "POST",
-      body: formData,
+      body: formDataJson,
     })
     console.log(typeof jsonBlob); // ควรได้ "object"
 console.log(jsonBlob instanceof Blob); // ควรได้ true
@@ -1299,49 +1329,44 @@ console.log("Server response:", result);
   let uploadedUUID = ""; 
   //without Elements
   async function exportPdf() {
-    if (!pdfLibDoc) {
-      const canvasWidth = parseFloat(canvas.style.width);
-      const canvasHeight = parseFloat(canvas.style.height);
-      pdfLibDoc = await PDFLib.PDFDocument.create();
-      pdfLibDoc.addPage([canvasWidth, canvasHeight]);
-    }
+    // if (!pdfLibDoc) {
+    //   const canvasWidth = parseFloat(canvas.style.width);
+    //   const canvasHeight = parseFloat(canvas.style.height);
+    //   pdfLibDoc = await PDFLib.PDFDocument.create();
+    //   pdfLibDoc.addPage([canvasWidth, canvasHeight]);
+    // }
 
-    let workingPdfDoc;
-    if (currentPdf && totalPages > 1) {
-      workingPdfDoc = await PDFLib.PDFDocument.create();
-      const [copiedPage] = await workingPdfDoc.copyPages(pdfLibDoc, [
-        currentPage - 1,
-      ]);
-      workingPdfDoc.addPage(copiedPage);
-    } else {
-      workingPdfDoc = pdfLibDoc;
-    }
+    // let workingPdfDoc;
+    // if (currentPdf && totalPages > 1) {
+    //   workingPdfDoc = await PDFLib.PDFDocument.create();
+    //   const [copiedPage] = await workingPdfDoc.copyPages(pdfLibDoc, [
+    //     currentPage - 1,
+    //   ]);
+    //   workingPdfDoc.addPage(copiedPage);
+    // } else {
+    //   workingPdfDoc = pdfLibDoc;
+    // }
+    // const uuid = crypto.randomUUID();
+    // // Convert PDF to binary
+    // const pdfBytes = await workingPdfDoc.save();
+    // const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
 
-    // Convert PDF to binary
-    const pdfBytes = await workingPdfDoc.save();
-    const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
+    // // Send to backend
+    // const formDataPdf = new FormData();
+    // formDataPdf.append("pdfFile", pdfBlob, "layout.pdf");
+    // formDataPdf.append("uuid", uuid); // Add UUID to the form data
+    // try {
+    //   const response = await fetch("http://localhost:3000/upload-pdf", {
+    //     method: "POST",
+    //     body: formDataPdf,
+    //   });
 
-    // Send to backend
-    const formData = new FormData();
-    formData.append("pdfFile", pdfBlob, "layout.pdf");
-
-    try {
-      const response = await fetch("http://localhost:3000/upload-pdf", {
-        method: "POST",
-        body: formData,
-      });
-
-      const result = await response.json();
-      console.log("Server response:", result);
-      if (result.uuid) {
-        uploadedUUID = result.uuid; // Save UUID globally for later use
-    }
-    else {
-        console.error("UUID not found in server response.");
-      }
-    } catch (error) {
-      console.error("Error uploading PDF:", error);
-    }
+    //   const result = await response.json();
+    //   console.log("Server response:", result);
+      
+    // } catch (error) {
+    //   console.error("Error uploading PDF:", error);
+    // }
     
 }
 

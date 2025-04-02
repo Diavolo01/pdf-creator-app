@@ -1,0 +1,23 @@
+{
+  "canvasWidth": 1190.55,
+  "canvasHeight": 1683.78,
+  "items": [
+    {
+      "type": "div",
+      "textBoxName": "textbox-1",
+      "text": "text",
+      "x": 417,
+      "y": 41,
+      "width": 36,
+      "height": 29,
+      "zIndex": "auto",
+      "fontSize": "16px",
+      "fontColor": "#000000",
+      "textAlign": "left"
+    }
+  ],
+  "pdfInfo": {
+    "currentPage": 1,
+    "totalPages": 3
+  }
+}
