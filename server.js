@@ -4,6 +4,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
+const { PDFDocument } = require('pdf-lib');
 
 dotenv.config();
 const app = express();
@@ -62,6 +63,95 @@ app.post("/save-config", upload.single("jsonFile"), (req, res) => {
   }
   res.json({ message: "Config saved successfully!", filename: req.file.filename, uuid: req.query.uuid });
 });
+app.post("/api", async (req, res) => {
+  const getData = req.body;
+  const pdfFiles = [];
+  const jsonFiles = [];
+  let mergedJsonData = {};
+
+  for (const element of getData) {
+    const pdfPath = path.join(__dirname, "public/files/upload", `${element.UUID}.pdf`);
+    const jsonPath = path.join(__dirname, "public/files/upload", `${element.UUID}.json`);
+    let jsonData = {};
+    try {
+       jsonData = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+      console.log(jsonData);
+    } catch (error) {
+      console.error(`Error reading JSON file: ${jsonPath}`, error);
+    }
+  
+    if (fs.existsSync(pdfPath)) {
+      const pdfBytes = fs.readFileSync(pdfPath);
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+      jsonData.items.forEach(element => {
+        if (element.src??false) {
+      console.log('image', element)
+        }
+        else if (element.textBoxName??false) {
+          console.log('text', element)  
+        }
+        else if (!(element.src??false) && !(element.textBoxName??false)) {
+          console.log('hr', element)  
+        }
+      });
+      
+      // Draw text on the first page (for example)
+      const page = pdfDoc.getPages()[0];
+      page.drawText("A", {
+        x: 20,
+        y: 20,
+        size: 50,
+      });
+
+      // Save the modified PDF
+      const modifiedPdfBytes = await pdfDoc.save();
+      fs.writeFileSync(pdfPath, modifiedPdfBytes); // Overwrite the original PDF or save it elsewhere if needed
+
+      pdfFiles.push(pdfPath); // Add the modified PDF to the merge list
+    } else {
+      console.log(`PDF not found: ${pdfPath}`);
+    }
+
+    if (fs.existsSync(jsonPath)) {
+      try {
+        const jsonData = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
+        mergedJsonData[element.UUID] = jsonData; // Merge JSON under its UUID key
+        jsonFiles.push(jsonPath);
+      } catch (error) {
+        console.error(`Error reading JSON file: ${jsonPath}`, error);
+      }
+    } else {
+      console.log(`JSON not found: ${jsonPath}`);
+    }
+  }
+
+  // Merge PDFs
+  await mergePDFs("merged.pdf", pdfFiles);
+
+  // Save merged JSON
+
+
+  res.json({ message: "PDFs and JSON merged successfully!", pdf: "merged.pdf"});
+});
+
+
+async function mergePDFs(outputFilename, pdfFiles) {
+  const mergedPdf = await PDFDocument.create();
+
+  for (const pdfFile of pdfFiles) {
+      const pdfBytes = fs.readFileSync(pdfFile);
+      const pdf = await PDFDocument.load(pdfBytes);
+      const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
+      copiedPages.forEach(page => mergedPdf.addPage(page));
+  }
+
+  const mergedPdfBytes = await mergedPdf.save();
+  fs.writeFileSync(path.join(__dirname, "public/files/upload", outputFilename), mergedPdfBytes);
+
+  console.log(`PDF merged successfully: ${outputFilename}`);
+}
+
+
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
