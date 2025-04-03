@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-  var uuid = crypto.randomUUID();
+  var uuid = window.location.pathname.split("/")[2]??crypto.randomUUID();
   const paperSizeSelect = document.getElementById("paperSize");
   const canvas = document.getElementById("canvas");
   const addImageUrlButton = document.getElementById("startDrawImg");
@@ -1254,7 +1254,47 @@ console.log("Server response:", result);
       console.error('Error loading JSON:', error);
     }
   }
-  
+  async function importPDF() {
+    try {
+      let number =window.location.pathname.split("/")[2]??'';
+      const response = await axios.get(`http://localhost:3000/files/upload/${number}.pdf`, {
+        responseType: 'arraybuffer',
+      });
+      // ทำให้เป็นไฟล์
+      const pdfData = new Uint8Array(response.data);
+      // เช็ต header
+      currentPdf = await pdfjsLib.getDocument({ data: pdfData }).promise;
+
+      // Load the PDF using PDF-Lib for manipulation
+      pdfLibDoc = await PDFLib.PDFDocument.load(pdfData);
+
+      // Get the total number of pages
+      totalPages = currentPdf.numPages;
+      currentPage = 1;
+
+      // Show PDF controls
+      pdfControls.style.display = "block";
+      updatePageInfo();
+
+      // Render the first page and adjust the canvas size
+      await renderPdfPage(currentPage);
+      // const pdfBytes = new Uint8Array(response.data);
+      // currentPdf = await PDFLib.PDFDocument.load(pdfBytes);
+      // totalPages = currentPdf.getPageCount();
+      // pdfControls.style.display = "block";
+      // currentPage = 1; // Reset to the first page
+      // updatePageInfo(); // Update page info display
+      // handleTemplateChange(response.data); // Handle template change if needed
+    }
+   catch (error) {
+    console.error('Error loading PDF:', error);
+   }
+  }
+
+  window.onload = async function () {
+  await importJSON();
+  await importPDF();
+};
 
   function importConfig(event ,type = "file") {
     let file = null;
@@ -1355,37 +1395,37 @@ console.log("Server response:", result);
     }
   }
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    // ดึง UUID จาก URL
-    const pathSegments = window.location.pathname.split("/");
-    const uuid = pathSegments[2]; // ดึง UUID จาก "/edit/xxxxxx"
-    console.log("it in");
-    if (!uuid) {
-        console.error("No UUID found in URL");
-        return;
-    }
+//   document.addEventListener("DOMContentLoaded", async () => {
+//     // ดึง UUID จาก URL
+//     const pathSegments = window.location.pathname.split("/");
+//     const uuid = pathSegments[2]; // ดึง UUID จาก "/edit/xxxxxx"
+//     console.log("it in");
+//     if (!uuid) {
+//         console.error("No UUID found in URL");
+//         return;
+//     }
 
-    console.log(`Loading config for UUID: ${uuid}`);
+//     console.log(`Loading config for UUID: ${uuid}`);
 
-    try {
-      console.log(number);
-        // โหลดไฟล์ config JSON
-        const response = await fetch(`/files/upload/${number}.json`);
+//     try {
+//       console.log(number);
+//         // โหลดไฟล์ config JSON
+//         const response = await fetch(`/files/upload/${number}.json`);
         
-        if (!response.ok) {
-            console.warn(`Config file not found for UUID: ${number}`);
-            return;
-        }
+//         if (!response.ok) {
+//             console.warn(`Config file not found for UUID: ${number}`);
+//             return;
+//         }
 
-        const configData = await response.json();
-        console.log("Loaded Config:", configData);
+//         const configData = await response.json();
+//         console.log("Loaded Config:", configData);
 
-        // อัปเดต UI ตามข้อมูล JSON
-        importConfigFromServer(configData);
-    } catch (error) {
-        console.error("Error loading config:", error);
-    }
-});
+//         // อัปเดต UI ตามข้อมูล JSON
+//         importConfigFromServer(configData);
+//     } catch (error) {
+//         console.error("Error loading config:", error);
+//     }
+// });
   async function embedFont(doc) {
     // Embed a standard font
     return await doc.embedFont(PDFLib.StandardFonts.Helvetica);
