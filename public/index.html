@@ -52,16 +52,112 @@
         <label>Image Src: <input id="ImgSrc" type="text"></label>
         <button id="updateLastImage">Update Last Image</button>
         <script>
-          // Extract number from the URL
-          const pathSegments = window.location.pathname.split("/");
-          const number = pathSegments[2]; // Get the number from "/edit/123"
+          //  document.addEventListener("DOMContentLoaded", async () => {
+    // ดึง UUID จาก URL
+//     const pathSegments = window.location.pathname.split("/");
+//     const uuid = pathSegments[2]; // ดึง UUID จาก "/edit/xxxxxx"
+//     console.log("it in");
+//     if (!uuid) {
+//         console.error("No UUID found in URL");
+//         return;
+//     }
+
+//     console.log(`Loading config for UUID: ${uuid}`);
+
+//     try {
+//         // โหลดไฟล์ config JSON
+//         const response = await fetch(`/files/upload/${uuid}.json`);
+        
+//         if (!response.ok) {
+//             console.warn(`Config file not found for UUID: ${uuid}`);
+//             return;
+//         }
+
+//         const configData = await response.json();
+//         console.log("Loaded Config:", configData);
+
+//         // อัปเดต UI ตามข้อมูล JSON
+//         importConfigFromServer(configData);
+//     } catch (error) {
+//         console.error("Error loading config:", error);
+//     }
+// });
+// function importConfigFromServer(config) {
+//     try {
+//       const canvas = document.getElementById("canvas");
+//       // Clear the canvas first
+//       canvas.innerHTML = "";
   
-          // Display the number if it's valid
-          if (!isNaN(number)) {
-              document.getElementById("number-display").textContent = `Number: ${number}`;
-          } else {
-              document.getElementById("number-display").textContent = "No number found";
-          }
+//       // Set canvas dimensions
+//       if (config.canvasWidth && config.canvasHeight) {
+//         canvas.style.width = `${config.canvasWidth}px`;
+//         canvas.style.height = `${config.canvasHeight}px`;
+//       }
+//       canvas.appendChild(selectionBox);
+  
+//       // Restore template image if it exists in the config
+//       if (config.templateSrc) {
+//         const templateImg = document.createElement("img");
+//         templateImg.id = "templateImage";
+//         templateImg.style.position = "absolute";
+//         templateImg.style.top = "0";
+//         templateImg.style.left = "0";
+//         templateImg.style.zIndex = "-1";
+//         templateImg.src = config.templateSrc;
+//         canvas.appendChild(templateImg);
+//         canvas.appendChild(selectionBox);
+//       }
+  
+//       // Add all items back to the canvas
+//       config.items.forEach((item) => {
+//         if (item.src) {
+//           const imgContainer = createImageContainer(item.src);
+//           imgContainer.style.left = `${item.x}px`;
+//           imgContainer.style.top = `${item.y}px`;
+//           imgContainer.style.width = `${item.width}px`;
+//           imgContainer.style.height = `${item.height}px`;
+//           imgContainer.style.zIndex = "1";
+//           canvas.appendChild(imgContainer);
+//         } else if (item.text) {
+//           createTextbox(item.x, item.y, item.text, item.textBoxName);
+//           const textbox = document.querySelector(
+//             `[data-name="${item.textBoxName}"]`
+//           );
+//           if (textbox) {
+//             textbox.style.width = `${item.width}px`;
+//             textbox.style.height = `${item.height}px`;
+//             textbox.style.fontSize = item.fontSize || "16px";
+//             textbox.style.color = item.fontColor || "#000000";
+//             textbox.style.textAlign = item.textAlign || "left";
+//             textbox.style.zIndex = "1";
+//           }
+//         }
+//         // Add horizontal type
+//         else if (item.type === "div") {
+//           const hr = createHr(item.x, item.y);
+//           hr.style.left = `${item.x}px`;
+//           hr.style.top = `${item.y}px`;
+//           hr.style.width = `${item.width || 300}px`;
+//         }
+//       });
+  
+//       // If PDF info is available in the config, update PDF controls
+//       if (config.pdfInfo) {
+//         pdfControls.style.display = "block";
+//         currentPage = config.pdfInfo.currentPage || 1;
+//         totalPages = config.pdfInfo.totalPages || 1;
+//         updatePageInfo();
+//       } else {
+//         pdfControls.style.display = "none";
+//       }
+//     } catch (error) {
+//       console.error("Error importing config:", error);
+//       alert("Invalid configuration file. Please try again.");
+//     }
+//   }
+  // const pathSegments = window.location.pathname.split("/")[2]??'';
+  //         var number = pathSegments[2]??''; // Get the number from "/edit/123"
+  //          })
       </script>
   </div>
   
@@ -73,5 +169,8 @@
     <script src="js/jspdf.umd.min.js"></script>
     <script src="js/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-lib@0.0.149/build/pdf.min.js"></script>
+    <script src="
+https://cdn.jsdelivr.net/npm/axios@1.8.4/dist/axios.min.js
+"></script>
   </body>
 </html>

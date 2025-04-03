@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
+  var uuid = crypto.randomUUID();
   const paperSizeSelect = document.getElementById("paperSize");
   const canvas = document.getElementById("canvas");
   const addImageUrlButton = document.getElementById("startDrawImg");
@@ -38,7 +39,7 @@ document.addEventListener("DOMContentLoaded", () => {
   prevPageButton.addEventListener("click", showPreviousPage);
   nextPageButton.addEventListener("click", showNextPage);
   copyButton.addEventListener("click", copySelectedItem);
-  pasteButton.addEventListener("click", pasteItem);
+  pasteButton.addEventListener("click", importJSON);
   drawHRline.addEventListener("click", startDrawHr);
   updatedImagebutton.addEventListener("click", updateSelectedImage);
 
@@ -1148,7 +1149,7 @@ document.addEventListener("DOMContentLoaded", () => {
     } else {
       workingPdfDoc = pdfLibDoc;
     }
-    const uuid = crypto.randomUUID();
+
     // Convert PDF to binary
     const pdfBytes = await workingPdfDoc.save();
     const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
@@ -1241,134 +1242,196 @@ console.log(jsonBlob.type);
 const result = await response.json();
 console.log("Server response:", result);
   }
+  async function importJSON() {
+   
+    try { 
+      let number =window.location.pathname.split("/")[2]??'';
+      console.log(number);
+      const response = await axios.get(`http://localhost:3000/files/upload/${number}.json`);
+      console.log("URL: "+response.data);
+      importConfig(response.data, 'json'); // Pass data correctly
+    } catch (error) {
+      console.error('Error loading JSON:', error);
+    }
+  }
+  
 
-  function importConfig(event) {
-    const file = event.target.files[0];
+  function importConfig(event ,type = "file") {
+    let file = null;
+    let config = null;
+    if (type === "file") {
+      file = event.target.files[0];
+
+    }
+    else {
+      config = event;
+    }
+ 
+    console.log(file);
+
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const config = JSON.parse(e.target.result);
-
-          // Clear the canvas first
-          canvas.innerHTML = "";
-
-          // Set canvas dimensions
-          if (config.canvasWidth && config.canvasHeight) {
-            canvas.style.width = `${config.canvasWidth}px`;
-            canvas.style.height = `${config.canvasHeight}px`;
-          }
-          canvas.appendChild(selectionBox);
-          // Restore template image if it exists in the config
-          if (config.templateSrc) {
-            const templateImg = document.createElement("img");
-            templateImg.id = "templateImage";
-            templateImg.style.position = "absolute";
-            templateImg.style.top = "0";
-            templateImg.style.left = "0";
-            templateImg.style.zIndex = "-1";
-            templateImg.src = config.templateSrc;
-            canvas.appendChild(templateImg);
-            canvas.appendChild(selectionBox);
-          }
-
-          // Add all items back to the canvas
-          config.items.forEach((item) => {
-            if (item.src) {
-              const imgContainer = createImageContainer(item.src);
-              imgContainer.style.left = `${item.x}px`;
-              imgContainer.style.top = `${item.y}px`;
-              imgContainer.style.width = `${item.width}px`;
-              imgContainer.style.height = `${item.height}px`;
-              imgContainer.style.zIndex = "1";
-              canvas.appendChild(imgContainer);
-            } else if (item.text) {
-              createTextbox(item.x, item.y, item.text, item.textBoxName);
-              const textbox = document.querySelector(
-                `[data-name="${item.textBoxName}"]`
-              );
-              if (textbox) {
-                textbox.style.width = `${item.width}px`;
-                textbox.style.height = `${item.height}px`;
-                textbox.style.fontSize = item.fontSize || "16px";
-                textbox.style.color = item.fontColor || "#000000";
-                textbox.style.textAlign = item.textAlign || "left";
-                textbox.style.zIndex = "1";
-              }
-            }
-            //add horizontal type
-            else if (item.type === "div") {
-              const hr = createHr(item.x, item.y);
-              hr.style.left = `${item.x}px`;
-              hr.style.top = `${item.y}px`;
-              hr.style.width = `${item.width || 300}px`; // ใช้ค่าจาก JSON ถ้ามี
-            }
-          });
-
-          // If PDF info is available in the config, update PDF controls
-          if (config.pdfInfo) {
-            pdfControls.style.display = "block";
-            currentPage = config.pdfInfo.currentPage || 1;
-            totalPages = config.pdfInfo.totalPages || 1;
-            updatePageInfo();
-          } else {
-            pdfControls.style.display = "none";
-          }
+          config = JSON.parse(e.target.result); // Fix missing JSON parsing
+          loadConfig(config); // Refactor canvas loading logic into a function
         } catch (error) {
           console.error("Error importing config:", error);
           alert("Invalid configuration file. Please try again.");
         }
       };
       reader.readAsText(file);
+    } else if (config) {
+      loadConfig(config); // Directly load config if JSON data is passed
     }
   }
+
+  function loadConfig(config) {
+    try {
+      // Clear the canvas first
+      canvas.innerHTML = "";
+  
+      // Set canvas dimensions
+      if (config.canvasWidth && config.canvasHeight) {
+        canvas.style.width = `${config.canvasWidth}px`;
+        canvas.style.height = `${config.canvasHeight}px`;
+      }
+      canvas.appendChild(selectionBox);
+  
+      // Restore template image if available
+      if (config.templateSrc) {
+        const templateImg = document.createElement("img");
+        templateImg.id = "templateImage";
+        templateImg.style.position = "absolute";
+        templateImg.style.top = "0";
+        templateImg.style.left = "0";
+        templateImg.style.zIndex = "-1";
+        templateImg.src = config.templateSrc;
+        canvas.appendChild(templateImg);
+        canvas.appendChild(selectionBox);
+      }
+  
+      // Add all items to the canvas
+      config.items.forEach((item) => {
+        if (item.src) {
+          const imgContainer = createImageContainer(item.src);
+          imgContainer.style.left = `${item.x}px`;
+          imgContainer.style.top = `${item.y}px`;
+          imgContainer.style.width = `${item.width}px`;
+          imgContainer.style.height = `${item.height}px`;
+          imgContainer.style.zIndex = "1";
+          canvas.appendChild(imgContainer);
+        } else if (item.text) {
+          createTextbox(item.x, item.y, item.text, item.textBoxName);
+          const textbox = document.querySelector(`[data-name="${item.textBoxName}"]`);
+          if (textbox) {
+            textbox.style.width = `${item.width}px`;
+            textbox.style.height = `${item.height}px`;
+            textbox.style.fontSize = item.fontSize || "16px";
+            textbox.style.color = item.fontColor || "#000000";
+            textbox.style.textAlign = item.textAlign || "left";
+            textbox.style.zIndex = "1";
+          }
+        } else if (item.type === "div") {
+          const hr = createHr(item.x, item.y);
+          hr.style.left = `${item.x}px`;
+          hr.style.top = `${item.y}px`;
+          hr.style.width = `${item.width || 300}px`;
+        }
+      });
+  
+      // Handle PDF information
+      if (config.pdfInfo) {
+        pdfControls.style.display = "block";
+        currentPage = config.pdfInfo.currentPage || 1;
+        totalPages = config.pdfInfo.totalPages || 1;
+        updatePageInfo();
+      } else {
+        pdfControls.style.display = "none";
+      }
+    } catch (error) {
+      console.error("Error processing config:", error);
+      alert("Failed to load configuration.");
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    // ดึง UUID จาก URL
+    const pathSegments = window.location.pathname.split("/");
+    const uuid = pathSegments[2]; // ดึง UUID จาก "/edit/xxxxxx"
+    console.log("it in");
+    if (!uuid) {
+        console.error("No UUID found in URL");
+        return;
+    }
+
+    console.log(`Loading config for UUID: ${uuid}`);
+
+    try {
+      console.log(number);
+        // โหลดไฟล์ config JSON
+        const response = await fetch(`/files/upload/${number}.json`);
+        
+        if (!response.ok) {
+            console.warn(`Config file not found for UUID: ${number}`);
+            return;
+        }
+
+        const configData = await response.json();
+        console.log("Loaded Config:", configData);
+
+        // อัปเดต UI ตามข้อมูล JSON
+        importConfigFromServer(configData);
+    } catch (error) {
+        console.error("Error loading config:", error);
+    }
+});
   async function embedFont(doc) {
     // Embed a standard font
     return await doc.embedFont(PDFLib.StandardFonts.Helvetica);
   }
-  let uploadedUUID = ""; 
-  //without Elements
-  async function exportPdf() {
-    // if (!pdfLibDoc) {
-    //   const canvasWidth = parseFloat(canvas.style.width);
-    //   const canvasHeight = parseFloat(canvas.style.height);
-    //   pdfLibDoc = await PDFLib.PDFDocument.create();
-    //   pdfLibDoc.addPage([canvasWidth, canvasHeight]);
-    // }
+//   //without Elements
+//   async function exportPdf() {
+//     // if (!pdfLibDoc) {
+//     //   const canvasWidth = parseFloat(canvas.style.width);
+//     //   const canvasHeight = parseFloat(canvas.style.height);
+//     //   pdfLibDoc = await PDFLib.PDFDocument.create();
+//     //   pdfLibDoc.addPage([canvasWidth, canvasHeight]);
+//     // }
 
-    // let workingPdfDoc;
-    // if (currentPdf && totalPages > 1) {
-    //   workingPdfDoc = await PDFLib.PDFDocument.create();
-    //   const [copiedPage] = await workingPdfDoc.copyPages(pdfLibDoc, [
-    //     currentPage - 1,
-    //   ]);
-    //   workingPdfDoc.addPage(copiedPage);
-    // } else {
-    //   workingPdfDoc = pdfLibDoc;
-    // }
-    // const uuid = crypto.randomUUID();
-    // // Convert PDF to binary
-    // const pdfBytes = await workingPdfDoc.save();
-    // const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
+//     // let workingPdfDoc;
+//     // if (currentPdf && totalPages > 1) {
+//     //   workingPdfDoc = await PDFLib.PDFDocument.create();
+//     //   const [copiedPage] = await workingPdfDoc.copyPages(pdfLibDoc, [
+//     //     currentPage - 1,
+//     //   ]);
+//     //   workingPdfDoc.addPage(copiedPage);
+//     // } else {
+//     //   workingPdfDoc = pdfLibDoc;
+//     // }
+//     // const uuid = crypto.randomUUID();
+//     // // Convert PDF to binary
+//     // const pdfBytes = await workingPdfDoc.save();
+//     // const pdfBlob = new Blob([pdfBytes], { type: "application/pdf" });
 
-    // // Send to backend
-    // const formDataPdf = new FormData();
-    // formDataPdf.append("pdfFile", pdfBlob, "layout.pdf");
-    // formDataPdf.append("uuid", uuid); // Add UUID to the form data
-    // try {
-    //   const response = await fetch("http://localhost:3000/upload-pdf", {
-    //     method: "POST",
-    //     body: formDataPdf,
-    //   });
+//     // // Send to backend
+//     // const formDataPdf = new FormData();
+//     // formDataPdf.append("pdfFile", pdfBlob, "layout.pdf");
+//     // formDataPdf.append("uuid", uuid); // Add UUID to the form data
+//     // try {
+//     //   const response = await fetch("http://localhost:3000/upload-pdf", {
+//     //     method: "POST",
+//     //     body: formDataPdf,
+//     //   });
 
-    //   const result = await response.json();
-    //   console.log("Server response:", result);
+//     //   const result = await response.json();
+//     //   console.log("Server response:", result);
       
-    // } catch (error) {
-    //   console.error("Error uploading PDF:", error);
-    // }
+//     // } catch (error) {
+//     //   console.error("Error uploading PDF:", error);
+//     // }
     
-}
+// }
 
   //with Elements
   async function previewPdf() {

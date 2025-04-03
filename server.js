@@ -15,8 +15,11 @@ app.use(express.urlencoded({ extended: true })); // Ensure form data is parsed
 
 app.use(express.static(path.join(__dirname, "public")));
 app.use("/edit", express.static(path.join(__dirname, "public")));
+app.use("/files/upload", express.static(path.join(__dirname, "public/files/upload")));
 
-app.get("/edit/:id", (req, res) => {
+
+app.get("/edit/:uuid", (req, res) => {
+  uuid = req.params.uuid;
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
@@ -59,7 +62,6 @@ app.post("/save-config", upload.single("jsonFile"), (req, res) => {
   }
   res.json({ message: "Config saved successfully!", filename: req.file.filename, uuid: req.query.uuid });
 });
-
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
