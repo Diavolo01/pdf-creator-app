@@ -1238,7 +1238,7 @@ document.addEventListener("DOMContentLoaded", () => {
 console.log(jsonBlob instanceof Blob); // ควรได้ true
 console.log(jsonBlob.size); // แสดงขนาดของ Blob (ควรมากกว่า 0)
 console.log(jsonBlob.type); 
-   
+  console.log(canvasWidth, canvasHeight)
 const result = await response.json();
 console.log("Server response:", result);
   }

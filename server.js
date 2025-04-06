@@ -63,6 +63,7 @@ app.post("/save-config", upload.single("jsonFile"), (req, res) => {
   }
   res.json({ message: "Config saved successfully!", filename: req.file.filename, uuid: req.query.uuid });
 });
+
 app.post("/api", async (req, res) => {
   const getData = req.body;
   const pdfFiles = [];
@@ -75,7 +76,7 @@ app.post("/api", async (req, res) => {
     let jsonData = {};
     try {
        jsonData = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
-      console.log(jsonData);
+      // console.log(jsonData);
     } catch (error) {
       console.error(`Error reading JSON file: ${jsonPath}`, error);
     }
@@ -94,18 +95,28 @@ app.post("/api", async (req, res) => {
           console.log('hr', element)  
         }
       });
+
+      const page = pdfDoc.getPages()[0];
+      const { width, height } = page.getSize();
+      
+      const scale = 2; // for example, double the size
+      const Width = width * scale;
+      const Height = height * scale;
+      
+      console.log('Scaled size:', { Width, Height });
+      
       
       // Draw text on the first page (for example)
-      const page = pdfDoc.getPages()[0];
-      page.drawText("A", {
-        x: 20,
-        y: 20,
-        size: 50,
-      });
-
+      // const page = pdfDoc.getPages()[0];
+      // page.drawText("A", {
+      //   x: 20,
+      //   y: 20,
+      //   size: 50,
+      // });
+      
       // Save the modified PDF
       const modifiedPdfBytes = await pdfDoc.save();
-      fs.writeFileSync(pdfPath, modifiedPdfBytes); // Overwrite the original PDF or save it elsewhere if needed
+      // fs.writeFileSync(pdfPath, modifiedPdfBytes); // Overwrite the original PDF or save it elsewhere if needed
 
       pdfFiles.push(pdfPath); // Add the modified PDF to the merge list
     } else {
@@ -130,7 +141,7 @@ app.post("/api", async (req, res) => {
 
   // Save merged JSON
 
-
+  
   res.json({ message: "PDFs and JSON merged successfully!", pdf: "merged.pdf"});
 });
 
@@ -143,6 +154,17 @@ async function mergePDFs(outputFilename, pdfFiles) {
       const pdf = await PDFDocument.load(pdfBytes);
       const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
       copiedPages.forEach(page => mergedPdf.addPage(page));
+
+      
+    copiedPages.forEach((page) => {
+      // Modify pages here only in the merged PDF
+      page.drawText("A", {
+        x: 20,
+        y: 20,
+        size: 50,
+      });
+      // mergedPdf.addPage(page);
+    });
   }
 
   const mergedPdfBytes = await mergedPdf.save();
