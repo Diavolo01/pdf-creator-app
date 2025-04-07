@@ -4,7 +4,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
-const { PDFDocument } = require('pdf-lib');
+const { PDFDocument, rgb } = require('pdf-lib');
 
 dotenv.config();
 const app = express();
@@ -90,6 +90,7 @@ app.post("/api", async (req, res) => {
         }
         else if (element.textBoxName??false) {
           console.log('text', element)  
+          console.log('X:', element.x, 'Y:', element.y);
         }
         else if (!(element.src??false) && !(element.textBoxName??false)) {
           console.log('hr', element)  
@@ -99,24 +100,11 @@ app.post("/api", async (req, res) => {
       const page = pdfDoc.getPages()[0];
       const { width, height } = page.getSize();
       
-      const scale = 2; // for example, double the size
-      const Width = width * scale;
-      const Height = height * scale;
+      // const scale = 2; // for example, double the size
+      // const Width = width * scale;
+      // const Height = height * scale;
       
-      console.log('Scaled size:', { Width, Height });
-      
-      
-      // Draw text on the first page (for example)
-      // const page = pdfDoc.getPages()[0];
-      // page.drawText("A", {
-      //   x: 20,
-      //   y: 20,
-      //   size: 50,
-      // });
-      
-      // Save the modified PDF
-      const modifiedPdfBytes = await pdfDoc.save();
-      // fs.writeFileSync(pdfPath, modifiedPdfBytes); // Overwrite the original PDF or save it elsewhere if needed
+      console.log('Scaled size:', { width, height });
 
       pdfFiles.push(pdfPath); // Add the modified PDF to the merge list
     } else {
@@ -136,8 +124,13 @@ app.post("/api", async (req, res) => {
     }
   }
 
+  const pdfDataList = getData.map(element => ({
+    pdfPath: path.join(__dirname, "public/files/upload", `${element.UUID}.pdf`),
+    jsonData: mergedJsonData[element.UUID],
+  }));
+
   // Merge PDFs
-  await mergePDFs("merged.pdf", pdfFiles);
+  await mergePDFs("merged.pdf", pdfDataList);
 
   // Save merged JSON
 
@@ -146,24 +139,39 @@ app.post("/api", async (req, res) => {
 });
 
 
-async function mergePDFs(outputFilename, pdfFiles) {
+async function mergePDFs(outputFilename, pdfDataList) {
   const mergedPdf = await PDFDocument.create();
 
-  for (const pdfFile of pdfFiles) {
-      const pdfBytes = fs.readFileSync(pdfFile);
-      const pdf = await PDFDocument.load(pdfBytes);
-      const copiedPages = await mergedPdf.copyPages(pdf, pdf.getPageIndices());
-      copiedPages.forEach(page => mergedPdf.addPage(page));
+  for (const { pdfPath, jsonData } of pdfDataList) {
+    const pdfBytes = fs.readFileSync(pdfPath);
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    const pages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
 
-      
-    copiedPages.forEach((page) => {
-      // Modify pages here only in the merged PDF
-      page.drawText("A", {
-        x: 20,
-        y: 20,
-        size: 50,
+    pages.forEach((page, index) => {
+      mergedPdf.addPage(page);
+
+      // Draw based on JSON data
+      jsonData.items.forEach(element => {
+        if (element.src??false) {
+          console.log('image', element);
+        }
+        else if (element.textBoxName??false) {
+          page.drawText(element.text, {
+            x:  element.x,
+            y: element.y,
+            size: 12,
+            color: rgb(0, 0, 0),
+          });
+        }
+        else if (!(element.src??false) && !(element.textBoxName??false)) {
+          // page.drawLine({
+          //   start: { x: element.x, y: element.y },
+          //   end: { x: element.x + element.length, y: element.y },
+          //   thickness: element.thickness || 1,
+          //   color: rgb(0.5, 0.5, 0.5),
+          // });
+        }
       });
-      // mergedPdf.addPage(page);
     });
   }
 
@@ -172,6 +180,7 @@ async function mergePDFs(outputFilename, pdfFiles) {
 
   console.log(`PDF merged successfully: ${outputFilename}`);
 }
+
 
 
 // Start the server

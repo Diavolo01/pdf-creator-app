@@ -306,7 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const page = await currentPdf.getPage(pageNumber);
-      const scale = 2;
+      const scale = 1;
       const viewport = page.getViewport({ scale });
 
       // Adjust the canvas size based on PDF page dimensions
