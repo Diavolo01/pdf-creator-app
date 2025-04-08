@@ -306,7 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const page = await currentPdf.getPage(pageNumber);
-      const scale = 1;
+      const scale = 2;
       const viewport = page.getViewport({ scale });
 
       // Adjust the canvas size based on PDF page dimensions
@@ -1485,20 +1485,20 @@ console.log("Server response:", result);
     }
 
     // If we have a multi-page PDF, work with the current page only
-    let workingPdfDoc;
+    let loadedPdfDoc;
     if (currentPdf && totalPages > 1) {
       // Create a new PDF with just the current page
-      workingPdfDoc = await PDFLib.PDFDocument.create();
-      const [copiedPage] = await workingPdfDoc.copyPages(pdfLibDoc, [
+      loadedPdfDoc = await PDFLib.PDFDocument.create();
+      const [copiedPage] = await loadedPdfDoc.copyPages(pdfLibDoc, [
         currentPage - 1,
       ]);
-      workingPdfDoc.addPage(copiedPage);
+      loadedPdfDoc.addPage(copiedPage);
     } else {
-      workingPdfDoc = pdfLibDoc;
+      loadedPdfDoc = pdfLibDoc;
     }
 
     // Get the page we're working with
-    const pages = workingPdfDoc.getPages();
+    const pages = loadedPdfDoc.getPages();
     const page = pages[0];
     const { width, height } = page.getSize();
 
@@ -1538,10 +1538,10 @@ console.log("Server response:", result);
             let embeddedImage;
             if (img.src.startsWith("data:image/png;base64,")) {
               const base64Data = img.src.split(",")[1];
-              embeddedImage = await workingPdfDoc.embedPng(base64Data);
+              embeddedImage = await loadedPdfDoc.embedPng(base64Data);
             } else if (img.src.startsWith("data:image/jpeg;base64,")) {
               const base64Data = img.src.split(",")[1];
-              embeddedImage = await workingPdfDoc.embedJpg(base64Data);
+              embeddedImage = await loadedPdfDoc.embedJpg(base64Data);
             }
              else {
               console.warn("Unsupported image format:", img.src);
@@ -1561,7 +1561,7 @@ console.log("Server response:", result);
         }
       }
     }
-    const font = await embedFont(workingPdfDoc);
+    const font = await embedFont(loadedPdfDoc);
     for (const item of items) {
       if (item.classList.contains("text-item")) {
         // Get text styles
@@ -1628,7 +1628,7 @@ console.log("Server response:", result);
       }
     }
     // Save the PDF
-    const pdfBytes = await workingPdfDoc.save();
+    const pdfBytes = await loadedPdfDoc.save();
     const blob = new Blob([pdfBytes], { type: "application/pdf" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
