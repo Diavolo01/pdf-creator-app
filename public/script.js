@@ -1581,8 +1581,7 @@ console.log("Server response:", result);
         const y =
           height -
           item.offsetTop * scaleY -
-          item.offsetHeight * scaleY +
-          fixedOffset;
+          item.offsetHeight * scaleY;
 
         console.log("Text content:", item.textContent);
         console.log("Scaled Position:", x, y);
