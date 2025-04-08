@@ -306,7 +306,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const page = await currentPdf.getPage(pageNumber);
-      const scale = 2;
+      const scale = 1;
       const viewport = page.getViewport({ scale });
 
       // Adjust the canvas size based on PDF page dimensions
@@ -1200,7 +1200,7 @@ document.addEventListener("DOMContentLoaded", () => {
             ? item.textContent
             : undefined,
           x: item.offsetLeft,
-          y: item.offsetTop,
+          y: canvasHeight - item.offsetTop - item.offsetHeight,
           width: item.offsetWidth,
           height: item.offsetHeight,
           zIndex: item.style.zIndex || "auto",
@@ -1526,8 +1526,7 @@ console.log("Server response:", result);
 
             // Scale the coordinates and dimensions
             const x = item.offsetLeft * scaleX;
-            const y =
-              height - item.offsetTop * scaleY - item.offsetHeight * scaleY;
+            const y =  height - item.offsetTop * scaleY - item.offsetHeight * scaleY;
             const imageWidth = item.offsetWidth * scaleX;
             const imageHeight = item.offsetHeight * scaleY;
 
