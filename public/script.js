@@ -1578,10 +1578,7 @@ console.log("Server response:", result);
         const fixedOffset = 10 * scaleY;
         // Scale the coordinates
         const x = item.offsetLeft * scaleX;
-        const y =
-          height -
-          item.offsetTop * scaleY -
-          item.offsetHeight * scaleY;
+        const y = height - (item.offsetTop * scaleY) - (fontSize * scaleY);
 
         console.log("Text content:", item.textContent);
         console.log("Scaled Position:", x, y);
