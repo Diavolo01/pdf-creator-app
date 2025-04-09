@@ -189,17 +189,23 @@ async function mergePDFs(outputFilename, pdfDataList) {
             height: Number(element.height),
           });
         } else if (element.textBoxName ?? false) {
-          const fontSize = parseFloat((element.fontSize).toString().replace("px", "")); //(element.fontSize || "12") 
+          const fontSize = parseFloat(
+            element.fontSize.toString().replace("px", "")
+          ); //(element.fontSize || "12")
+          const adjustY = element.y+element.height-fontSize;
           page.drawText(element.text, {
-            x: Number(element.x),
-            y: Number(element.y),
+            x: element.x,
+            y: adjustY,
             size: fontSize || 12,
             color: rgb(0, 0, 0),
           });
         } else if (!(element.src ?? false) && !(element.textBoxName ?? false)) {
-          // page.drawLine({
-          //   start: { x: element.x, y: element.y },
-          //   end: { x: element.x + element.length, y: element.y },
+          page.drawLine({
+            start: { x: element.x, y: element.y },
+            end: { x: element.x + element.width, y: element.y },
+            thickness: 2,
+            color: rgb(0, 0, 0),
+          });
         }
       }
     }
