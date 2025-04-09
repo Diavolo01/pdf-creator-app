@@ -113,14 +113,14 @@ app.post("/api", async (req, res) => {
         }
       });
 
-      const page = pdfDoc.getPages()[0];
-      const { width, height } = page.getSize();
+      // const page = pdfDoc.getPages()[0];
+      // const { width, height } = page.getSize();
 
       // const scale = 2; // for example, double the size
       // const Width = width * scale;
       // const Height = height * scale;
 
-      console.log("Scaled size:", { width, height });
+      // console.log("Scaled size:", { width, height });
 
       pdfFiles.push(pdfPath); // Add the modified PDF to the merge list
     } else {
@@ -167,6 +167,8 @@ async function mergePDFs(outputFilename, pdfDataList) {
     for (const page of pages) {
       mergedPdf.addPage(page);
 
+      const { width, height } = page.getSize();
+      console.log("Merged size:", { width, height });
       // Draw based on JSON data
       for (const element of jsonData.items) {
         if (element.src ?? false) {
@@ -181,8 +183,8 @@ async function mergePDFs(outputFilename, pdfDataList) {
 
           console.log("image", element);
           page.drawImage(embeddedImage, {
-            x: Number(element.x),
-            y: Number(element.y),
+            x: Math.min(element.x, width - 10),
+            y: Math.max(Math.min(element.y, height - 10), 10),
             width: Number(element.width),
             height: Number(element.height),
           });

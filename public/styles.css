@@ -36,13 +36,13 @@ body {
 
 .item {
     position: absolute;
-    border: 1px dashed #000;
+    border: 0.5px dashed #000;
     resize: both;
     overflow: auto;
 }
 
 .text-item {
-    outline: 1px solid #000;
+    outline: 0.5px solid #000;
 }
 
 .template-image {
@@ -56,12 +56,12 @@ body {
     position: absolute;
     resize: both;
     overflow: hidden;
-    border: 1px solid #ccc;
+    border: 0.5px solid #ccc;
 }
 
 .resize-handle {
-    width: 10px;
-    height: 10px;
+    width: 5px;
+    height: 5px;
     background: #7CB9E8;
     position: absolute;
 }
@@ -76,7 +76,7 @@ body {
     background-color: #fff;
     padding: 15px;
     box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
-    border-left: 1px solid #ccc;
+    border-left: 0.5px solid #ccc;
     position: fixed;
     right: 0;
     top: 0;
@@ -88,5 +88,5 @@ body {
     user-select: none;
 }
 .selected-item {
-    outline: 2px solid #0066ff!important;
+    outline: 0.5px solid #0066ff!important;
 }
