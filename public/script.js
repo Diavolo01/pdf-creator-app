@@ -1522,17 +1522,19 @@ console.log("Server response:", result);
 
             // Embed the image
             let embeddedImage;
-            if (img.src.startsWith("data:image/png;base64,")) {
-              const base64Data = img.src.split(",")[1];
-              embeddedImage = await loadedPdfDoc.embedPng(base64Data);
-            } else if (img.src.startsWith("data:image/jpeg;base64,")) {
-              const base64Data = img.src.split(",")[1];
-              embeddedImage = await loadedPdfDoc.embedJpg(base64Data);
-            }
-             else {
-              console.warn("Unsupported image format:", img.src);
-              continue;
-            }
+            const response = await fetch(img.src);
+                      const imageBuffer = await response.arrayBuffer();
+          
+                      // เช็คไฟล์จากนามสกุล URL
+                      const extension = img.src.split(".").pop().toLowerCase();
+                      if (extension === "png") {
+                        embeddedImage = await loadedPdfDoc.embedPng(imageBuffer);
+                      } else if (extension === "jpg" || extension === "jpeg") {
+                        embeddedImage = await loadedPdfDoc.embedJpg(imageBuffer);
+                      } else {
+                        console.warn("Unsupported image type:", extension);
+                        continue;
+                      }
 
             // Draw the image on the page with scaled dimensions
             page.drawImage(embeddedImage, {
