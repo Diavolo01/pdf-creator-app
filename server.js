@@ -103,6 +103,12 @@ app.post("/api", async (req, res) => {
               text: (element.Parameter[item.parameterName] ?? "").toString(),
             };
           }
+          else if (item.src && element.Parameter?.src) {
+            return {
+              ...item,
+              src: element.Parameter.src,
+            };
+          }
           return item;
         });
       }
