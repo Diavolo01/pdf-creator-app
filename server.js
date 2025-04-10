@@ -5,6 +5,7 @@ const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
 const { PDFDocument, rgb } = require("pdf-lib");
+const { fetch } = require("undici");
 
 dotenv.config();
 const app = express();
@@ -173,21 +174,30 @@ async function mergePDFs(outputFilename, pdfDataList) {
       for (const element of jsonData.items) {
         if (element.src ?? false) {
           let embeddedImage;
-          const base64Data = element.src.split(",")[1];
+          try {
+            const response = await fetch(element.src);
+            const imageBuffer = await response.arrayBuffer();
 
-          if (element.src.startsWith("data:image/png;base64,")) {
-            embeddedImage = await mergedPdf.embedPng(base64Data);
-          } else if (element.src.startsWith("data:image/jpeg;base64,")) {
-            embeddedImage = await mergedPdf.embedJpg(base64Data);
+            // เช็คไฟล์จากนามสกุล URL
+            const extension = element.src.split(".").pop().toLowerCase();
+            if (extension === "png") {
+              embeddedImage = await mergedPdf.embedPng(imageBuffer);
+            } else if (extension === "jpg" || extension === "jpeg") {
+              embeddedImage = await mergedPdf.embedJpg(imageBuffer);
+            } else {
+              console.warn("Unsupported image type:", extension);
+              continue;
+            }
+
+            page.drawImage(embeddedImage, {
+              x: Math.min(element.x, width - 10),
+              y: Math.max(Math.min(element.y, height - 10), 10),
+              width: Number(element.width),
+              height: Number(element.height),
+            });
+          } catch (err) {
+            console.error("Failed to load image from URL:", element.src, err.message);
           }
-
-          console.log("image", element);
-          page.drawImage(embeddedImage, {
-            x: Math.min(element.x, width - 10),
-            y: Math.max(Math.min(element.y, height - 10), 10),
-            width: Number(element.width),
-            height: Number(element.height),
-          });
         } else if (element.text ?? false) {
           const fontSize = parseFloat(
             element.fontSize.toString().replace("px", "")

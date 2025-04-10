@@ -630,37 +630,36 @@ document.addEventListener("DOMContentLoaded", () => {
     img.style.height = "100%";
 
     // Check if the image URL is from a remote source
-    if (isValidUrl(imageUrl)) {
-      convertImageToBase64(imageUrl)
-        .then((base64Image) => {
-          img.src = base64Image; // Set the image source to Base64
-          img.style.width = "100%";
-          img.style.height = "100%";
-          img.style.display = "block";
+    // if (isValidUrl(imageUrl)) {
+    //   convertImageToBase64(imageUrl)
+    //     .then((base64Image) => {
+    //       img.src = base64Image; // Set the image source to Base64
+    //       img.style.width = "100%";
+    //       img.style.height = "100%";
+    //       img.style.display = "block";
           img.onload = () => {
             imgContainer.appendChild(img);
             setupImageContainerInteractions(imgContainer);
           };
-        })
-        .catch((error) => {
-          alert("Failed to load image. Please check the URL.");
-          console.error(error);
-        });
-    } else {
-      img.src = imageUrl; // Direct URL for local files
-      img.style.width = "100%";
-      img.style.height = "100%";
-      img.style.display = "block";
-      img.onload = () => {
-        imgContainer.appendChild(img);
-        setupImageContainerInteractions(imgContainer);
-      };
-    }
+    //     })
+    //     .catch((error) => {
+    //       alert("Failed to load image. Please check the URL.");
+    //       console.error(error);
+    //     });
+    // } else {
+    //   img.src = imageUrl; // Direct URL for local files
+    //   img.style.width = "100%";
+    //   img.style.height = "100%";
+    //   img.style.display = "block";
+    //   img.onload = () => {
+    //     imgContainer.appendChild(img);
+    //     setupImageContainerInteractions(imgContainer);
+    //   };
+    // }
 
-    img.onerror = () => {
-      alert("Failed to load image. Please check the URL.");
-    };
-
+    // img.onerror = () => {
+    //   alert("Failed to load image. Please check the URL.");
+    // };
     return imgContainer;
   }
   function updateSelectedImage() {
@@ -672,16 +671,9 @@ document.addEventListener("DOMContentLoaded", () => {
       const newImageUrl = document.getElementById("ImgSrc").value;
       
       // ตรวจสอบว่า newImageUrl เป็น URL หรือ Base64
-      if (newImageUrl.startsWith("data:image/")) {
+      if (newImageUrl) {
         // ถ้าเป็น Base64 อยู่แล้ว ให้อัปเดตทันที
         img.src = newImageUrl;
-      } else {
-        // ถ้าเป็น URL ต้องแปลงเป็น Base64 ก่อน
-        convertImageToBase64(newImageUrl).then(base64 => {
-          img.src = base64;
-        }).catch(error => {
-          console.error("Error converting image to base64:", error);
-        });
       }
     } else {
       alert("No image selected! Please select an image first.");
@@ -702,29 +694,24 @@ document.addEventListener("DOMContentLoaded", () => {
 //     });
 // }
 
-  function isValidUrl(url) {
-    const pattern = new RegExp("^(https?|ftp)://[^\\s/$.?#].[^\\s]*$", "i");
-    return pattern.test(url);
-  }
-
   // Function to convert image URL to Base64
-  function convertImageToBase64(imageUrl) {
-    return new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = "Anonymous"; // To handle cross-origin images
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        canvas.width = img.width;
-        canvas.height = img.height;
-        const ctx = canvas.getContext("2d");
-        ctx.drawImage(img, 0, 0);
-        const base64Image = canvas.toDataURL("image/png"); // Get the Base64 representation
-        resolve(base64Image);
-      };
-      img.onerror = reject;
-      img.src = imageUrl;
-    });
-  }
+  // function convertImageToBase64(imageUrl) {
+  //   return new Promise((resolve, reject) => {
+  //     const img = new Image();
+  //     img.crossOrigin = "Anonymous"; // To handle cross-origin images
+  //     img.onload = () => {
+  //       const canvas = document.createElement("canvas");
+  //       canvas.width = img.width;
+  //       canvas.height = img.height;
+  //       const ctx = canvas.getContext("2d");
+  //       ctx.drawImage(img, 0, 0);
+  //       const base64Image = canvas.toDataURL("image/png"); // Get the Base64 representation
+  //       resolve(base64Image);
+  //     };
+  //     img.onerror = reject;
+  //     img.src = imageUrl;
+  //   });
+  // }
 
   function makeDraggable(container) {
     let isResizing = false;
@@ -1356,7 +1343,7 @@ console.log("Server response:", result);
         if (item.src) {
           const imgContainer = createImageContainer(item.src);
           imgContainer.style.left = `${item.x}px`;
-          imgContainer.style.top = `${item.y}px`;
+          imgContainer.style.top = `${config.canvasHeight-item.y-item.height}px`;
           imgContainer.style.width = `${item.width}px`;
           imgContainer.style.height = `${item.height}px`;
           imgContainer.style.zIndex = "1";
@@ -1373,9 +1360,9 @@ console.log("Server response:", result);
             textbox.style.zIndex = "1";
           }
         } else if (item.type === "div") {
-          const hr = createHr(item.x, item.y);
+          const hr = createHr(item.x,item.y);
           hr.style.left = `${item.x}px`;
-          hr.style.top = `${item.y}px`;
+          hr.style.top = `${config.canvasHeight-item.y}px`;
           hr.style.width = `${item.width || 300}px`;
         }
       });
