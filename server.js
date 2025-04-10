@@ -94,21 +94,33 @@ app.post("/api", async (req, res) => {
     let jsonData = {};
     try {
       jsonData = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
-      // console.log(jsonData);
+      if (jsonData.items && Array.isArray(jsonData.items)) {
+        jsonData.items = jsonData.items.map((item) => {
+          if (item.parameterName && element.Parameter?.[item.parameterName]) {
+            return {
+              ...item,
+              text: (element.Parameter[item.parameterName] ?? "").toString(),
+            };
+          }
+          return item;
+        });
+      }
+      mergedJsonData[element.UUID] = jsonData; 
+  jsonFiles.push(jsonPath);
     } catch (error) {
       console.error(`Error reading JSON file: ${jsonPath}`, error);
     }
-
+    
     if (fs.existsSync(pdfPath)) {
       const pdfBytes = fs.readFileSync(pdfPath);
       const pdfDoc = await PDFDocument.load(pdfBytes);
       jsonData.items.forEach((element) => {
         if (element.src ?? false) {
           console.log("image", element);
-        } else if (element.textBoxName ?? false) {
+        } else if (element.text ?? false) {
           console.log("text", element);
           console.log("X:", element.x, "Y:", element.y);
-        } else if (!(element.src ?? false) && !(element.textBoxName ?? false)) {
+        } else if (!(element.src ?? false) && !(element.text ?? false)) {
           console.log("hr", element);
         }
       });
@@ -125,18 +137,6 @@ app.post("/api", async (req, res) => {
       pdfFiles.push(pdfPath); // Add the modified PDF to the merge list
     } else {
       console.log(`PDF not found: ${pdfPath}`);
-    }
-
-    if (fs.existsSync(jsonPath)) {
-      try {
-        const jsonData = JSON.parse(fs.readFileSync(jsonPath, "utf8"));
-        mergedJsonData[element.UUID] = jsonData; // Merge JSON under its UUID key
-        jsonFiles.push(jsonPath);
-      } catch (error) {
-        console.error(`Error reading JSON file: ${jsonPath}`, error);
-      }
-    } else {
-      console.log(`JSON not found: ${jsonPath}`);
     }
   }
 
@@ -188,7 +188,7 @@ async function mergePDFs(outputFilename, pdfDataList) {
             width: Number(element.width),
             height: Number(element.height),
           });
-        } else if (element.textBoxName ?? false) {
+        } else if (element.text ?? false) {
           const fontSize = parseFloat(
             element.fontSize.toString().replace("px", "")
           ); //(element.fontSize || "12")
@@ -199,7 +199,7 @@ async function mergePDFs(outputFilename, pdfDataList) {
             size: fontSize || 12,
             color: rgb(0, 0, 0),
           });
-        } else if (!(element.src ?? false) && !(element.textBoxName ?? false)) {
+        } else if (!(element.src ?? false) && !(element.text ?? false)) {
           page.drawLine({
             start: { x: element.x, y: element.y },
             end: { x: element.x + element.width, y: element.y },

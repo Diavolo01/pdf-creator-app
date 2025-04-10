@@ -914,11 +914,11 @@ document.addEventListener("DOMContentLoaded", () => {
     textbox.classList.add("textbox", "text-item");
     textbox.textContent = textContent;
     const defaultName = `textbox-${textBoxCounter}`;
-    const textBoxName = customName.trim() !== "" ? customName : defaultName;
+    const parameterName = customName.trim() !== "" ? customName : defaultName;
     textbox.dataset.id = `textbox-${textBoxCounter}`;
     textbox.id = `textbox-${textBoxCounter}`;
-    textbox.dataset.name = textBoxName;
-    textbox.name = textBoxName;
+    textbox.dataset.name = parameterName;
+    textbox.name = parameterName;
     textBoxCounter++;
 
     textbox.style.position = "absolute";
@@ -1003,7 +1003,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("posY").value =
       parseInt(element.style.top) || element.offsetTop;
     document.getElementById("textboxId").textContent = element.dataset.id;
-    document.getElementById("textboxName").value = element.dataset.name;
+    document.getElementById("parameterName").value = element.dataset.name;
 
     document
       .getElementById("fontSize")
@@ -1018,7 +1018,7 @@ document.addEventListener("DOMContentLoaded", () => {
       .getElementById("posY")
       .addEventListener("input", updateTextboxProperties);
     document
-      .getElementById("textboxName")
+      .getElementById("parameterName")
       .addEventListener("input", updateTextboxProperties);
   }
 
@@ -1035,10 +1035,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const textbox = document.getElementById(textboxId);
     if (!textbox) return;
 
-    const textboxName = document.getElementById("textboxName").value.trim();
-    if (textboxName) {
-      textbox.dataset.name = textboxName;
-      textbox.name = textboxName;
+    const parameterName = document.getElementById("parameterName").value.trim();
+    if (parameterName) {
+      textbox.dataset.name = parameterName;
+      textbox.name = parameterName;
     }
 
     const fontSize = parseInt(document.getElementById("fontSize").value);
@@ -1193,7 +1193,7 @@ document.addEventListener("DOMContentLoaded", () => {
             item.classList.contains("image-container")
               ? item.querySelector("img")?.src
               : undefined,
-          textBoxName: item.classList.contains("text-item")
+          parameterName: item.classList.contains("text-item")
             ? item.dataset.name
             : undefined,
           text: item.classList.contains("text-item")
@@ -1362,8 +1362,8 @@ console.log("Server response:", result);
           imgContainer.style.zIndex = "1";
           canvas.appendChild(imgContainer);
         } else if (item.text) {
-          createTextbox(item.x, item.y, item.text, item.textBoxName);
-          const textbox = document.querySelector(`[data-name="${item.textBoxName}"]`);
+          createTextbox(item.x,config.canvasHeight-item.y-item.height, item.text, item.parameterName);
+          const textbox = document.querySelector(`[data-name="${item.parameterName}"]`);
           if (textbox) {
             textbox.style.width = `${item.width}px`;
             textbox.style.height = `${item.height}px`;
