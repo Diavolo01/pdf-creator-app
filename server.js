@@ -24,7 +24,27 @@ app.use(
 
 app.get("/edit/:uuid", (req, res) => {
   uuid = req.params.uuid;
+
   res.sendFile(path.join(__dirname, "public/index.html"));
+});
+
+app.get("/getFonts", (req, res) => {
+  // uuid = req.params.uuid;
+  //list pdf and json files in the directory
+  const files = fs.readdirSync(path.join(__dirname, "public/fonts"));
+  // files to array
+  const fontFiles = files.map((file) => {
+    //if filter.ttf only
+    if (!file.endsWith(".ttf")) return null;
+    //rename file to remove .ttf
+    const fontName = file.replace(".ttf", "");
+    return fontName;
+  });
+  //remove null values
+  const filteredFontFiles = fontFiles.filter((file) => file !== null);
+  res.json(filteredFontFiles);
+
+
 });
 
 // Ensure the upload directory exists
@@ -103,10 +123,10 @@ app.post("/api", async (req, res) => {
               text: (element.Parameter[item.parameterName] ?? "").toString(),
             };
           }
-          else if (item.src && element.Parameter?.src) {
+          else if (item.src && element.Parameter?.[item.parameterImage]) {
             return {
               ...item,
-              src: element.Parameter.src,
+              src: (element.Parameter[item.parameterImage] ?? "").toString(),
             };
           }
           return item;

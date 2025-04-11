@@ -47,14 +47,21 @@
       <br><br>
       <label>Position Y: <input id="posY" type="number"></label>
       <br><br>
-      <p>Type: <span id="type">Textbox</span></p>
-      <p>Number: <span id="number-display">Loading...</span></p>
+      <label>Font Family:
+        <select id="fontSelect">
+          <option value="">Select</option>
+        </select>
+      </label>
+      <br>
+      <h3>Image Properties</h3>
+      <p>Image Index: <span id="imgContainerId">None</span></p>
+        <label>Parameter Image: <input id="parameterImage" type="text">
+          <br><br>
         <label>Image Src: <input id="ImgSrc" type="text"></label>
         <button id="updateLastImage">Update Last Image</button>
         <script>
       </script>
   </div>
-  
       
 <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
   <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>

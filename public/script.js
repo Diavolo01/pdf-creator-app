@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const pasteButton = document.getElementById("pasteItem");
   const drawHRline = document.getElementById("createHr");
   const updatedImagebutton = document.getElementById("updateLastImage");
+  const fontSelect = document.getElementById("fontSelect");
   let isDrawing = false;
 
   // PDF navigation variables
@@ -42,7 +43,28 @@ document.addEventListener("DOMContentLoaded", () => {
   pasteButton.addEventListener("click", importJSON);
   drawHRline.addEventListener("click", startDrawHr);
   updatedImagebutton.addEventListener("click", updateSelectedImage);
+  // Add event listener for font selection change with select element
 
+  fontSelect.addEventListener("change", updateFont);
+  // write function to update font of selected text
+  // write function to update font of selected image
+  function updateFont() {
+    const selectedFont = fontSelect.value;
+    document.querySelectorAll(".selected-item").forEach((item) => {
+      if (item.classList.contains("text-item")) {
+        item.style.fontFamily = selectedFont;
+      }});
+    }
+    //do i need to call this function when i select the font from the dropdown?
+
+  fetch("/getFonts").then(r => r.json()).then(fonts => {
+    const fontSelect = document.getElementById("fontSelect");
+    fontSelect.innerHTML = "";
+    fonts.forEach(f => {
+      fontSelect.innerHTML += `<option value="${f}">${f}</option>`;
+    });
+  });
+  
   const selectionBox = document.createElement("div");
   selectionBox.id = "selection-box";
   selectionBox.style.position = "absolute";
@@ -154,6 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
   canvas.removeEventListener("click", handleCanvasClick);
   canvas.addEventListener("click", (e) => {
     if (isDrawing) {
+     
       handleCanvasClick(e);
       return;
     }
@@ -181,6 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
     makeDraggable(imgContainer);
 
     imgContainer.addEventListener("click", (e) => {
+    
+      $('#parameterImage').val($(imgContainer).attr('data-name'))
       e.stopPropagation();
 
       // Remove selection from all other items
@@ -306,12 +331,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       const page = await currentPdf.getPage(pageNumber);
-      const scale = 1;
+      const scale = 3;
       const viewport = page.getViewport({ scale });
 
       // Adjust the canvas size based on PDF page dimensions
-      canvas.style.width = viewport.width + "px";
-      canvas.style.height = viewport.height + "px";
+      canvas.style.width = (viewport.width/scale) + "px";
+      canvas.style.height = (viewport.height/scale) + "px";
 
       const canvasTemp = document.createElement("canvas");
       canvasTemp.width = viewport.width;
@@ -385,6 +410,7 @@ document.addEventListener("DOMContentLoaded", () => {
           name: selectedItem.dataset.name,
           left: selectedItem.offsetLeft,
           top: selectedItem.offsetTop,
+          fontFamily: selectedItem.style.fontFamily,
         };
       } else if (selectedItem.classList.contains("image-container")) {
         // Copy image item
@@ -450,11 +476,12 @@ document.addEventListener("DOMContentLoaded", () => {
         newElement = createTextbox(x, y, copiedItem.content, copiedItem.name);
 
         // Apply copied styles
+        newElement.style.fontFamily = copiedItem.fontFamily;
         newElement.style.fontSize = copiedItem.fontSize;
         newElement.style.color = copiedItem.fontColor;
         newElement.style.textAlign = copiedItem.textAlign;
-        newElement.style.width = copiedItem.width - 10 + "px";
-        newElement.style.height = copiedItem.height - 10 + "px";
+        newElement.style.width = copiedItem.width + "px";
+        newElement.style.height = copiedItem.height + "px";
       } else if (copiedItem.type === "image") {
         // Create new image container
         newElement = createImageContainer(copiedItem.src);
@@ -605,13 +632,25 @@ document.addEventListener("DOMContentLoaded", () => {
     isDrawing = true;
     currentDrawMode = "img";
   }
-
-  function addImageUrl(x, y, imageUrl) {
+  let imageCounter = 1;
+  function addImageUrl(x, y, imageUrl,paraName, customimgName = "") {
     const imgContainer = createImageContainer(imageUrl);
     console.log(imgContainer);
-    canvas.appendChild(imgContainer);
+    imgContainer.paraName = paraName;
+    const defaultimgName = `image-${imageCounter}`;
+    const parameterImage = customimgName.trim() !== "" ? customimgName : defaultimgName;
+
+    imgContainer.dataset.id = `image-${imageCounter}`;
+    imgContainer.id = `image-${imageCounter}`;
+    imgContainer.dataset.name = parameterImage;
+    imgContainer.name = parameterImage;
+    imageCounter++;
+
+    imgContainer.style.position = "absolute";
     imgContainer.style.left = `${x}px`;
     imgContainer.style.top = `${y}px`;
+
+    canvas.appendChild(imgContainer);
     isDrawing = false;
   }
 
@@ -911,7 +950,8 @@ document.addEventListener("DOMContentLoaded", () => {
     textbox.style.position = "absolute";
     textbox.style.left = `${x}px`;
     textbox.style.top = `${y}px`;
-
+    textbox.style.fontFamily = fontSelect.value;
+  
     canvas.appendChild(textbox);
     makeDraggable(textbox);
     makeRemovable(textbox);
@@ -982,38 +1022,69 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   function updatePropertiesPanel(element) {
-    document.getElementById("fontSize").value =
-      parseInt(element.style.fontSize) || 16;
-    document.getElementById("textContent").value = element.textContent;
-    document.getElementById("posX").value =
-      parseInt(element.style.left) || element.offsetLeft;
-    document.getElementById("posY").value =
-      parseInt(element.style.top) || element.offsetTop;
-    document.getElementById("textboxId").textContent = element.dataset.id;
-    document.getElementById("parameterName").value = element.dataset.name;
-
-    document
-      .getElementById("fontSize")
-      .addEventListener("input", updateTextboxProperties);
-    document
-      .getElementById("textContent")
-      .addEventListener("input", updateTextboxProperties);
-    document
-      .getElementById("posX")
-      .addEventListener("input", updateTextboxProperties);
-    document
-      .getElementById("posY")
-      .addEventListener("input", updateTextboxProperties);
-    document
-      .getElementById("parameterName")
-      .addEventListener("input", updateTextboxProperties);
+    const isTextItem = element.classList.contains("text-item");
+    const isImageContainer = element.classList.contains("image-container");
+  
+    if (isTextItem) {
+      // update textbox properties panel
+      document.getElementById("fontSize").value =
+        parseInt(element.style.fontSize) || 16;
+      document.getElementById("textContent").value = element.textContent;
+      document.getElementById("posX").value =
+        parseInt(element.style.left) || element.offsetLeft;
+      document.getElementById("posY").value =
+        parseInt(element.style.top) || element.offsetTop;
+      document.getElementById("textboxId").textContent = element.dataset.id;
+      document.getElementById("parameterName").value = element.dataset.name;
+  
+      document
+        .getElementById("fontSize")
+        .addEventListener("input", updateTextboxProperties);
+      document
+        .getElementById("textContent")
+        .addEventListener("input", updateTextboxProperties);
+      document
+        .getElementById("posX")
+        .addEventListener("input", updateTextboxProperties);
+      document
+        .getElementById("posY")
+        .addEventListener("input", updateTextboxProperties);
+      document
+        .getElementById("parameterName")
+        .addEventListener("input", updateTextboxProperties);
+      
+    } else if (isImageContainer) {
+      document.getElementById("imgContainerId").paraName = element.dataset.id;
+      document.getElementById("paraName").value = element.paraName;
+      document.getElementById("parameterImage").value = element.dataset.name;
+      document
+        .getElementById("parameterImage")
+        .addEventListener("input", updateImageProperties);
+      document
+        .getElementById("paraName")
+        .addEventListener("input", updateImageProperties);
+    }
   }
 
   document.addEventListener("click", (event) => {
     if (event.target.classList.contains("text-item")) {
       updatePropertiesPanel(event.target);
     }
+    else if (event.target.classList.contains("image-container")) {
+      updatePropertiesPanel(event.target);
+    }
   });
+  function updateImageProperties() {
+    const imgContainerId = document.getElementById("imgContainerId").paraName;
+    if (!imgContainerId) return;
+    const imgContainer = document.getElementById(imgContainerId);
+    if (!imgContainer) return;
+    const parameterImage = document.getElementById("parameterImage").value.trim();
+    if (parameterImage) {
+      imgContainer.dataset.name = parameterImage;
+      imgContainer.name = parameterImage;
+    }
+  }
 
   function updateTextboxProperties() {
     const textboxId = document.getElementById("textboxId").textContent;
@@ -1175,6 +1246,9 @@ document.addEventListener("DOMContentLoaded", () => {
       .map((item) => {
         const itemData = {
           type: item.tagName.toLowerCase(),
+          parameterImage: item.classList.contains("image-container")
+            ? item.dataset.name
+            : undefined,
           src:
             item.tagName.toLowerCase() === "div" &&
             item.classList.contains("image-container")
@@ -1192,6 +1266,7 @@ document.addEventListener("DOMContentLoaded", () => {
           height: item.offsetHeight,
           zIndex: item.style.zIndex || "auto",
           fontSize: item.style.fontSize || "16px",
+          fontFamily: item.style.fontFamily || "Helvetica",
           fontColor: item.style.color || "#000000",
           textAlign: item.style.textAlign || "left",
         };
@@ -1320,8 +1395,8 @@ console.log("Server response:", result);
   
       // Set canvas dimensions
       if (config.canvasWidth && config.canvasHeight) {
-        canvas.style.width = `${config.canvasWidth}px`;
-        canvas.style.height = `${config.canvasHeight}px`;
+        canvas.style.width = `${config.canvasWidth}px`*3;
+        canvas.style.height = `${config.canvasHeight}px`*3;
       }
       canvas.appendChild(selectionBox);
   
@@ -1341,7 +1416,7 @@ console.log("Server response:", result);
       // Add all items to the canvas
       config.items.forEach((item) => {
         if (item.src) {
-          const imgContainer = createImageContainer(item.src);
+          const imgContainer = createImageContainer(item.src, item.parameterImage);
           imgContainer.style.left = `${item.x}px`;
           imgContainer.style.top = `${config.canvasHeight-item.y-item.height}px`;
           imgContainer.style.width = `${item.width}px`;
@@ -1358,6 +1433,7 @@ console.log("Server response:", result);
             textbox.style.color = item.fontColor || "#000000";
             textbox.style.textAlign = item.textAlign || "left";
             textbox.style.zIndex = "1";
+            textbox.style.fontFamily = item.fontFamily;
           }
         } else if (item.type === "div") {
           const hr = createHr(item.x,item.y);
@@ -1382,37 +1458,6 @@ console.log("Server response:", result);
     }
   }
 
-//   document.addEventListener("DOMContentLoaded", async () => {
-//     // ดึง UUID จาก URL
-//     const pathSegments = window.location.pathname.split("/");
-//     const uuid = pathSegments[2]; // ดึง UUID จาก "/edit/xxxxxx"
-//     console.log("it in");
-//     if (!uuid) {
-//         console.error("No UUID found in URL");
-//         return;
-//     }
-
-//     console.log(`Loading config for UUID: ${uuid}`);
-
-//     try {
-//       console.log(number);
-//         // โหลดไฟล์ config JSON
-//         const response = await fetch(`/files/upload/${number}.json`);
-        
-//         if (!response.ok) {
-//             console.warn(`Config file not found for UUID: ${number}`);
-//             return;
-//         }
-
-//         const configData = await response.json();
-//         console.log("Loaded Config:", configData);
-
-//         // อัปเดต UI ตามข้อมูล JSON
-//         importConfigFromServer(configData);
-//     } catch (error) {
-//         console.error("Error loading config:", error);
-//     }
-// });
   async function embedFont(doc) {
     // Embed a standard font
     return await doc.embedFont(PDFLib.StandardFonts.Helvetica);
