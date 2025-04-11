@@ -633,18 +633,19 @@ document.addEventListener("DOMContentLoaded", () => {
     currentDrawMode = "img";
   }
   let imageCounter = 1;
-  function addImageUrl(x, y, imageUrl,paraName, customimgName = "") {
+  function addImageUrl(x, y, imageUrl, customimgName = "") {
     const imgContainer = createImageContainer(imageUrl);
     console.log(imgContainer);
-    imgContainer.paraName = paraName;
     const defaultimgName = `image-${imageCounter}`;
     const parameterImage = customimgName.trim() !== "" ? customimgName : defaultimgName;
-
     imgContainer.dataset.id = `image-${imageCounter}`;
     imgContainer.id = `image-${imageCounter}`;
     imgContainer.dataset.name = parameterImage;
     imgContainer.name = parameterImage;
     imageCounter++;
+    console.log("ID:", imgContainer.id);
+    console.log("parameterImage:", parameterImage);
+  
 
     imgContainer.style.position = "absolute";
     imgContainer.style.left = `${x}px`;
@@ -1054,14 +1055,10 @@ document.addEventListener("DOMContentLoaded", () => {
         .addEventListener("input", updateTextboxProperties);
       
     } else if (isImageContainer) {
-      document.getElementById("imgContainerId").paraName = element.dataset.id;
-      document.getElementById("paraName").value = element.paraName;
+      document.getElementById("imgContainerId").parameterImage = element.dataset.id;
       document.getElementById("parameterImage").value = element.dataset.name;
       document
         .getElementById("parameterImage")
-        .addEventListener("input", updateImageProperties);
-      document
-        .getElementById("paraName")
         .addEventListener("input", updateImageProperties);
     }
   }
@@ -1075,7 +1072,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
   function updateImageProperties() {
-    const imgContainerId = document.getElementById("imgContainerId").paraName;
+    const imgContainerId = document.getElementById("imgContainerId").parameterImage;
     if (!imgContainerId) return;
     const imgContainer = document.getElementById(imgContainerId);
     if (!imgContainer) return;
@@ -1416,7 +1413,8 @@ console.log("Server response:", result);
       // Add all items to the canvas
       config.items.forEach((item) => {
         if (item.src) {
-          const imgContainer = createImageContainer(item.src, item.parameterImage);
+          createImageContainer(item.src, item.parameterImage);
+          const imgContainer = document.querySelector(`[data-name="${item.parameterImage}"]`);
           imgContainer.style.left = `${item.x}px`;
           imgContainer.style.top = `${config.canvasHeight-item.y-item.height}px`;
           imgContainer.style.width = `${item.width}px`;
