@@ -1011,7 +1011,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function makeRemovable(element) {
     document.addEventListener("keydown", (e) => {
+
       if (e.key === "Delete" || e.key === "Backspace") {
+        const active = document.activeElement;
+        const tag = active.tagName.toLowerCase();
+        const isTyping = tag === "input" || tag === "contenteditable";
+        if (isTyping) return; // Don't remove while typing
         const selectedElement = document.querySelector(".selected-item");
         if (selectedElement && selectedElement === element) {
           if (document.activeElement !== selectedElement) {
@@ -1413,14 +1418,16 @@ console.log("Server response:", result);
       // Add all items to the canvas
       config.items.forEach((item) => {
         if (item.src) {
-          createImageContainer(item.src, item.parameterImage);
+          addImageUrl(item.x,item.y,item.src, item.parameterImage);
           const imgContainer = document.querySelector(`[data-name="${item.parameterImage}"]`);
+          if (imgContainer) {
           imgContainer.style.left = `${item.x}px`;
           imgContainer.style.top = `${config.canvasHeight-item.y-item.height}px`;
           imgContainer.style.width = `${item.width}px`;
           imgContainer.style.height = `${item.height}px`;
           imgContainer.style.zIndex = "1";
-          canvas.appendChild(imgContainer);
+          canvas.appendChild(imgContainer);}
+          else {console.log("Image container not found for parameter:", item.parameterImage);}
         } else if (item.text) {
           createTextbox(item.x,config.canvasHeight-item.y-item.height, item.text, item.parameterName);
           const textbox = document.querySelector(`[data-name="${item.parameterName}"]`);

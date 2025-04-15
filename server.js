@@ -4,7 +4,8 @@ const dotenv = require("dotenv");
 const path = require("path");
 const cors = require("cors");
 const fs = require("fs");
-const { PDFDocument, rgb } = require("pdf-lib");
+const fontkit = require("fontkit");
+const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 const { fetch } = require("undici");
 
 dotenv.config();
@@ -185,6 +186,22 @@ app.post("/api", async (req, res) => {
 
 async function mergePDFs(outputFilename, pdfDataList) {
   const mergedPdf = await PDFDocument.create();
+  mergedPdf.registerFontkit(fontkit);
+  const fontsDir = path.join(__dirname, "public/fonts");
+  const fontFiles = fs.readdirSync(fontsDir);
+  
+  const embeddedFonts = {};
+  
+  for (const file of fontFiles) {
+    const ext = path.extname(file).toLowerCase();
+    if (ext === ".ttf" || ext === ".otf") {
+      const fontName = path.basename(file, ext); // เช่น Sarabun-Bold
+      const fontPath = path.join(fontsDir, file);
+      const fontBytes = fs.readFileSync(fontPath);
+      const embeddedFont = await mergedPdf.embedFont(fontBytes);
+      embeddedFonts[fontName] = embeddedFont;
+    }
+  }
 
   for (const { pdfPath, jsonData } of pdfDataList) {
     const pdfBytes = fs.readFileSync(pdfPath);
@@ -233,6 +250,8 @@ async function mergePDFs(outputFilename, pdfDataList) {
             x: element.x,
             y: adjustY,
             size: fontSize || 12,
+            //add embedded font
+            font: embeddedFonts[element.fontFamily],
             color: rgb(0, 0, 0),
           });
         } else if (!(element.src ?? false) && !(element.text ?? false)) {
@@ -255,7 +274,6 @@ async function mergePDFs(outputFilename, pdfDataList) {
 
   console.log(`PDF merged successfully: ${outputFilename}`);
 }
-
 // Start the server
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
