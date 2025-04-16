@@ -44,8 +44,6 @@ app.get("/getFonts", (req, res) => {
   //remove null values
   const filteredFontFiles = fontFiles.filter((file) => file !== null);
   res.json(filteredFontFiles);
-
-
 });
 
 // Ensure the upload directory exists
@@ -123,8 +121,7 @@ app.post("/api", async (req, res) => {
               ...item,
               text: (element.Parameter[item.parameterName] ?? "").toString(),
             };
-          }
-          else if (item.src && element.Parameter?.[item.parameterImage]) {
+          } else if (item.src && element.Parameter?.[item.parameterImage]) {
             return {
               ...item,
               src: (element.Parameter[item.parameterImage] ?? "").toString(),
@@ -133,12 +130,12 @@ app.post("/api", async (req, res) => {
           return item;
         });
       }
-      mergedJsonData[element.UUID] = jsonData; 
-  jsonFiles.push(jsonPath);
+      mergedJsonData[element.UUID] = jsonData;
+      jsonFiles.push(jsonPath);
     } catch (error) {
       console.error(`Error reading JSON file: ${jsonPath}`, error);
     }
-    
+
     if (fs.existsSync(pdfPath)) {
       const pdfBytes = fs.readFileSync(pdfPath);
       const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -189,9 +186,9 @@ async function mergePDFs(outputFilename, pdfDataList) {
   mergedPdf.registerFontkit(fontkit);
   const fontsDir = path.join(__dirname, "public/fonts");
   const fontFiles = fs.readdirSync(fontsDir);
-  
+
   const embeddedFonts = {};
-  
+
   for (const file of fontFiles) {
     const ext = path.extname(file).toLowerCase();
     if (ext === ".ttf" || ext === ".otf") {
@@ -239,27 +236,53 @@ async function mergePDFs(outputFilename, pdfDataList) {
               height: Number(element.height),
             });
           } catch (err) {
-            console.error("Failed to load image from URL:", element.src, err.message);
+            console.error(
+              "Failed to load image from URL:",
+              element.src,
+              err.message
+            );
           }
         } else if (element.text ?? false) {
           const fontSize = parseFloat(
             element.fontSize.toString().replace("px", "")
           ); //(element.fontSize || "12")
-          const adjustY = element.y+element.height-fontSize;
+          const adjustY = element.y + element.height - fontSize;
+          let r = 0,
+            g = 0,
+            b = 0;
+          let color = element.fontColor || "#000000";
+
+          if (color.startsWith("#") && /^#[0-9A-Fa-f]{6}$/.test(color)) {
+            r = parseInt(color.substring(1, 3), 16) / 255;
+            g = parseInt(color.substring(3, 5), 16) / 255;
+            b = parseInt(color.substring(5, 7), 16) / 255;
+          } else if (color.startsWith("rgb")) {
+            const match = color.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+            if (match) {
+              r = parseInt(match[1]) / 255;
+              g = parseInt(match[2]) / 255;
+              b = parseInt(match[3]) / 255;
+            } else {
+              console.warn("Invalid rgb format, fallback to black:", color);
+            }
+          } else {
+            console.warn("Unsupported color format, fallback to black:", color);
+          }
+
           page.drawText(element.text, {
             x: element.x,
             y: adjustY,
             size: fontSize || 12,
             //add embedded font
             font: embeddedFonts[element.fontFamily],
-            color: rgb(0, 0, 0),
+            color: rgb(r, g, b),
           });
         } else if (!(element.src ?? false) && !(element.text ?? false)) {
           page.drawLine({
             start: { x: element.x, y: element.y },
             end: { x: element.x + element.width, y: element.y },
             thickness: 2,
-            color: rgb(0, 0, 0),
+            color: color,
           });
         }
       }

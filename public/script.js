@@ -18,6 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const drawHRline = document.getElementById("createHr");
   const updatedImagebutton = document.getElementById("updateLastImage");
   const fontSelect = document.getElementById("fontSelect");
+  const colorPicker = document.getElementById("html5colorpicker");
   let isDrawing = false;
 
   // PDF navigation variables
@@ -43,11 +44,19 @@ document.addEventListener("DOMContentLoaded", () => {
   pasteButton.addEventListener("click", importJSON);
   drawHRline.addEventListener("click", startDrawHr);
   updatedImagebutton.addEventListener("click", updateSelectedImage);
-  // Add event listener for font selection change with select element
+  colorPicker.addEventListener("input", updateTextColor);
+  fontSelect.addEventListener("input", updateFont);
 
-  fontSelect.addEventListener("change", updateFont);
+  function updateTextColor() {
+    const color = colorPicker.value;
+    document.querySelectorAll(".selected-item").forEach((item) => {
+      if (item.classList.contains("text-item")) {
+        item.style.color = color;
+      }
+    });
+  }
   // write function to update font of selected text
-  // write function to update font of selected image
+
   function updateFont() {
     const selectedFont = fontSelect.value;
     document.querySelectorAll(".selected-item").forEach((item) => {
