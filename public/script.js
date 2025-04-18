@@ -213,7 +213,6 @@ document.addEventListener("DOMContentLoaded", () => {
     makeDraggable(imgContainer);
 
     imgContainer.addEventListener("click", (e) => {
-    
       $('#parameterImage').val($(imgContainer).attr('data-name'))
       e.stopPropagation();
 
@@ -428,12 +427,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
         copiedData = {
           type: "image",
+          parameterImage: selectedItem.dataset.name,
           src: img.src,
           width: selectedItem.offsetWidth,
           height: selectedItem.offsetHeight,
           left: selectedItem.offsetLeft,
           top: selectedItem.offsetTop,
         };
+        console.log(copiedData);
       } else if (selectedItem.classList.contains("horizontal-line")) {
         copiedData = {
           type: "horizontal-line",
@@ -493,12 +494,12 @@ document.addEventListener("DOMContentLoaded", () => {
         newElement.style.height = copiedItem.height + "px";
       } else if (copiedItem.type === "image") {
         // Create new image container
-        newElement = createImageContainer(copiedItem.src);
+        newElement = createImageContainer(copiedItem.src, copiedItem.name);
         newElement.style.left = x + "px";
         newElement.style.top = y + "px";
         newElement.style.width = copiedItem.width + "px";
         newElement.style.height = copiedItem.height + "px";
-
+        newElement.dataset.name = copiedItem.parameterImage;
         canvas.appendChild(newElement);
       } else if (copiedItem.type === "horizontal-line") {
         // Create new horizontal line
