@@ -290,8 +290,12 @@ async function mergePDFs(outputFilename, pdfDataList) {
   }
 
   const mergedPdfBytes = await mergedPdf.save();
-  return mergedPdfBytes;
-  // Save the merged PDF to a file
+  fs.writeFileSync(
+    path.join(__dirname, "public/files/upload", outputFilename),
+    mergedPdfBytes
+  );
+
+  console.log(`PDF merged successfully: ${outputFilename}`);
 }
 // Start the server
 app.listen(port, () => {
