@@ -1307,7 +1307,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const jsonBlob = new Blob([jsonString], { type: "application/json" });
     const formDataJson = new FormData();
     formDataJson.append("jsonFile", jsonBlob);
-    const response = await fetch(`http://localhost:3000/save-config?uuid=${uuid}`, { 
+    const response = await fetch(`save-config?uuid=${uuid}`, { 
       method: "POST",
       body: formDataJson,
     })
@@ -1324,7 +1324,7 @@ console.log("Server response:", result);
     try { 
       let number =window.location.pathname.split("/")[2]??'';
       console.log(number);
-      const response = await axios.get(`http://localhost:3000/files/upload/${number}.json`);
+      const response = await axios.get(`/files/upload/${number}.json`);
       console.log("URL: "+response.data);
       importConfig(response.data, 'json'); // Pass data correctly
     } catch (error) {
@@ -1334,7 +1334,7 @@ console.log("Server response:", result);
   async function importPDF() {
     try {
       let number =window.location.pathname.split("/")[2]??'';
-      const response = await axios.get(`http://localhost:3000/files/upload/${number}.pdf`, {
+      const response = await axios.get(`/files/upload/${number}.pdf`, {
         responseType: 'arraybuffer',
       });
       // ทำให้เป็นไฟล์
