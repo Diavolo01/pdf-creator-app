@@ -202,10 +202,10 @@ res.json({
 
   // Save merged JSON
 
-  res.json({
-    message: "PDFs and JSON merged successfully!",
-    pdf: "merged.pdf",
-  });
+  // res.json({
+  //   message: "PDFs and JSON merged successfully!",
+  //   pdf: "merged.pdf",
+  // });
 });
 
 async function mergePDFs(outputFilename, pdfDataList) {
