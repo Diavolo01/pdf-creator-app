@@ -1229,8 +1229,9 @@ document.addEventListener("DOMContentLoaded", () => {
     formDataPdf.append("pdfFile", pdfBlob);
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
+    console.log("hostname:", hostname);
     try {
-      const response = await fetch(`http://localhost:3000/upload-pdf?uuid=${uuid}`, { 
+      const response = await fetch(`${protocol}//${hostname}/upload-pdf?uuid=${uuid}`, { 
         method: "POST",
         body: formDataPdf,
       });
