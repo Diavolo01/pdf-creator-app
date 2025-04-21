@@ -29,22 +29,6 @@ app.get("/edit/:uuid", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
-app.get("/get/:uuid", (req, res) => {
-  const { uuid } = req.params;
-  const pdfPath = path.join(__dirname, "public/files/output", `${uuid}.pdf`);
-
-  if (!fs.existsSync(pdfPath)) {
-    return res.status(404).json({ message: "PDF not found" });
-  }
-
-  const fileStream = fs.createReadStream(pdfPath);
-
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", `inline; filename="${uuid}.pdf"`); // หรือ `attachment;` ถ้าจะให้โหลด
-  fileStream.pipe(res);
-});
-
-
 app.get("/getFonts", (req, res) => {
   // uuid = req.params.uuid;
   //list pdf and json files in the directory
@@ -187,25 +171,14 @@ app.post("/api", async (req, res) => {
   }));
 
   // Merge PDFs
-  const mergedPdfBytes = await mergePDFs("merged.pdf", pdfDataList);
-
-// Save merged PDF to disk by UUID (สมมติเอา UUID แรกของรายการเป็น key)
-const outputUUID = getData[0]?.UUID || "merged";
-const outputPath = path.join(__dirname, "public/files/output", `${outputUUID}.pdf`);
-fs.writeFileSync(outputPath, mergedPdfBytes);
-
-res.json({
-  message: "PDF generated successfully!",
-  uuid: outputUUID,
-  downloadUrl: `/get/${outputUUID}`,
-});
+  await mergePDFs("merged.pdf", pdfDataList);
 
   // Save merged JSON
 
-  // res.json({
-  //   message: "PDFs and JSON merged successfully!",
-  //   pdf: "merged.pdf",
-  // });
+  res.json({
+    message: "PDFs and JSON merged successfully!",
+    pdf: "merged.pdf",
+  });
 });
 
 async function mergePDFs(outputFilename, pdfDataList) {
