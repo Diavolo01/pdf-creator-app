@@ -11,7 +11,7 @@ const { Readable } = require('stream');
 dotenv.config();
 const app = express();
 app.use(cors());
-const port = process.env.PORT || 80;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Ensure form data is parsed
