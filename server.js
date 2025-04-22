@@ -22,11 +22,25 @@ app.use(
   "/files/upload",
   express.static(path.join(__dirname, "public/files/upload"))
 );
+const mergedpdfStore = new Map();
 
 app.get("/edit/:uuid", (req, res) => {
   uuid = req.params.uuid;
 
   res.sendFile(path.join(__dirname, "public/index.html"));
+});
+
+app.get("/get/:uuid", (req, res) => {
+  const uuid = req.params.uuid;
+  const pdfBuffer = mergedpdfStore.get(uuid);
+
+  if (!pdfBuffer) {
+    return res.status(404).send("PDF not found.");
+  }
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", "inline; filename=" + uuid + ".pdf");
+  res.send(pdfBuffer);
 });
 
 app.get("/getFonts", (req, res) => {
@@ -181,7 +195,7 @@ app.post("/api", async (req, res) => {
   });
 });
 
-async function mergePDFs(outputFilename, pdfDataList) {
+async function mergePDFs(uuid, pdfDataList) {
   const mergedPdf = await PDFDocument.create();
   mergedPdf.registerFontkit(fontkit);
   const fontsDir = path.join(__dirname, "public/fonts");
@@ -290,12 +304,8 @@ async function mergePDFs(outputFilename, pdfDataList) {
   }
 
   const mergedPdfBytes = await mergedPdf.save();
-  fs.writeFileSync(
-    path.join(__dirname, "public/files/upload", outputFilename),
-    mergedPdfBytes
-  );
-
-  console.log(`PDF merged successfully: ${outputFilename}`);
+  mergedpdfStore.set(uuid, mergedPdfBytes);
+  return mergedPdfBytes;
 }
 // Start the server
 app.listen(port, () => {
