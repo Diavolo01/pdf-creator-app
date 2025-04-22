@@ -185,7 +185,7 @@ app.post("/api", async (req, res) => {
   }));
 
   // Merge PDFs
-  await mergePDFs(uuid, pdfDataList);
+  await mergePDFs("merged.pdf", pdfDataList);
 
   // Save merged JSON
 
