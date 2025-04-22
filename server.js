@@ -305,6 +305,7 @@ async function mergePDFs(uuid, pdfDataList) {
 
   const mergedPdfBytes = await mergedPdf.save();
   mergedpdfStore.set(uuid, mergedPdfBytes);
+  console.log("Merged PDF saved successfully!");
   return mergedPdfBytes;
 }
 // Start the server
