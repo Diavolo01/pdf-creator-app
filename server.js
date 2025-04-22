@@ -163,16 +163,6 @@ app.post("/api", async (req, res) => {
           console.log("hr", element);
         }
       });
-
-      // const page = pdfDoc.getPages()[0];
-      // const { width, height } = page.getSize();
-
-      // const scale = 2; // for example, double the size
-      // const Width = width * scale;
-      // const Height = height * scale;
-
-      // console.log("Scaled size:", { width, height });
-
       pdfFiles.push(pdfPath); // Add the modified PDF to the merge list
     } else {
       console.log(`PDF not found: ${pdfPath}`);
@@ -185,9 +175,11 @@ app.post("/api", async (req, res) => {
   }));
 
   // Merge PDFs
-  await mergePDFs("merged.pdf", pdfDataList);
+  const uuid = getData[0]?.UUID; // ใช้ UUID แรก หรือสร้างใหม่ก็ได้
+  const mergedPdfBuffer = await mergePDFs(uuid, pdfDataList);
 
-  // Save merged JSON
+  // เก็บใน memory
+  mergedpdfStore.set(uuid, mergedPdfBuffer);
 
   res.json({
     message: "PDFs and JSON merged successfully!",
@@ -304,7 +296,6 @@ async function mergePDFs(uuid, pdfDataList) {
   }
 
   const mergedPdfBytes = await mergedPdf.save();
-  mergedpdfStore.set(uuid, mergedPdfBytes);
   console.log("Merged PDF saved successfully!");
   return mergedPdfBytes;
 }
