@@ -11,7 +11,7 @@ const { fetch } = require("undici");
 dotenv.config();
 const app = express();
 app.use(cors());
-const port = process.env.PORT || 80;
+const port = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Ensure form data is parsed
@@ -179,11 +179,12 @@ app.post("/api", async (req, res) => {
   const mergedPdfBuffer = await mergePDFs(uuid, pdfDataList);
 
   // เก็บใน memory
-  mergedpdfStore.set(uuid, mergedPdfBuffer);
+  mergedpdfStore.set(uuid, Buffer.from(mergedPdfBuffer));
 
   res.json({
     message: "PDFs and JSON merged successfully!",
-    pdf: "merged.pdf",
+    uuid: uuid,
+    pdf: `/get/${uuid}`,
   });
 });
 
