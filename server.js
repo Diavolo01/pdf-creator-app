@@ -7,11 +7,11 @@ const fs = require("fs");
 const fontkit = require("fontkit");
 const { PDFDocument, rgb, StandardFonts } = require("pdf-lib");
 const { fetch } = require("undici");
-
+const { Readable } = require('stream');
 dotenv.config();
 const app = express();
 app.use(cors());
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 80;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Ensure form data is parsed
@@ -37,10 +37,14 @@ app.get("/get/:uuid", (req, res) => {
   if (!pdfBuffer) {
     return res.status(404).send("PDF not found.");
   }
-
+  // stream the PDF back to the client
+  const stream = new Readable();
+  stream._read = () => {};
+  stream.push(pdfBuffer);
+  stream.push(null); // บอกว่า stream จบแล้ว
   res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "inline; filename=" + uuid + ".pdf");
-  res.send(pdfBuffer);
+  res.setHeader("Content-Disposition", `inline; filename="${uuid}.pdf"`);
+  stream.pipe(res); // ส่ง stream ไปยัง response
 });
 
 app.get("/getFonts", (req, res) => {
@@ -179,13 +183,14 @@ app.post("/api", async (req, res) => {
   const mergedPdfBuffer = await mergePDFs(uuid, pdfDataList);
 
   // เก็บใน memory
-  mergedpdfStore.set(uuid, Buffer.from(mergedPdfBuffer));
-
-  res.json({
-    message: "PDFs and JSON merged successfully!",
-    uuid: uuid,
-    pdf: `/get/${uuid}`,
-  });
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", "inline; filename=" + uuid + ".pdf");
+  res.send(Buffer.from(mergedPdfBuffer));
+  // res.json({
+  //   message: "PDFs and JSON merged successfully!",
+  //   uuid: uuid,
+  //   pdf: `/get/${uuid}`,
+  // });
 });
 
 async function mergePDFs(uuid, pdfDataList) {
