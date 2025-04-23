@@ -58,21 +58,27 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   // write function to update font of selected text
-
   function updateFont() {
     const selectedFont = fontSelect.value;
     document.querySelectorAll(".selected-item").forEach((item) => {
       if (item.classList.contains("text-item")) {
         item.style.fontFamily = selectedFont;
-      }});
-    }
-    //do i need to call this function when i select the font from the dropdown?
-
+      }
+    });
+  }
+  
   fetch("/getFonts").then(r => r.json()).then(fonts => {
-    const fontSelect = document.getElementById("fontSelect");
-    fontSelect.innerHTML = "";
     fonts.forEach(f => {
+      // Add to select
       fontSelect.innerHTML += `<option value="${f}">${f}</option>`;
+  
+      // Register @font-face
+      const fontFace = new FontFace(f, `url(/fonts/${f}.ttf)`);
+      fontFace.load().then(loadedFace => {
+        document.fonts.add(loadedFace);
+      }).catch(err => {
+        console.error("Font loading failed: ", err);
+      });
     });
   });
   
