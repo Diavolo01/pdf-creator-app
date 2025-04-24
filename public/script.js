@@ -13,8 +13,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const nextPageButton = document.getElementById("nextPage");
   const pageInfoSpan = document.getElementById("pageInfo");
   const pdfControls = document.getElementById("pdfControls");
-  const copyButton = document.getElementById("copyItem");
-  const pasteButton = document.getElementById("pasteItem");
+  // const copyButton = document.getElementById("copyItem");
+  // const pasteButton = document.getElementById("pasteItem");
   const drawHRline = document.getElementById("createHr");
   const updatedImagebutton = document.getElementById("updateLastImage");
   const fontSelect = document.getElementById("fontSelect");
@@ -42,8 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
   canvas.addEventListener("click", handleCanvasClick);
   prevPageButton.addEventListener("click", showPreviousPage);
   nextPageButton.addEventListener("click", showNextPage);
-  copyButton.addEventListener("click", copySelectedItem);
-  pasteButton.addEventListener("click", importJSON);
+  // copyButton.addEventListener("click", copySelectedItem);
+  // pasteButton.addEventListener("click", importJSON);
   drawHRline.addEventListener("click", startDrawHr);
   updatedImagebutton.addEventListener("click", updateSelectedImage);
   colorPicker.addEventListener("input", updateTextColor);
@@ -277,7 +277,8 @@ document.addEventListener("DOMContentLoaded", () => {
         templateImg.style.position = "absolute";
         templateImg.style.top = "0";
         templateImg.style.left = "0";
-        templateImg.style.zIndex = "-1";
+        // templateImg.style.zIndex = "-1"; // Set z-index to -1 to place it behind other elements
+        templateImg.style.pointerEvents = "none"; // Prevent interaction with the image
         canvas.appendChild(templateImg);
       }
 
@@ -1287,7 +1288,7 @@ document.addEventListener("DOMContentLoaded", () => {
           height: item.offsetHeight,
           zIndex: item.style.zIndex || "auto",
           fontSize: item.style.fontSize || "16px",
-          fontFamily: item.style.fontFamily || "Helvetica",
+          fontFamily: item.style.fontFamily || "Sarabun-Regular",
           fontColor: item.style.color || "#000000",
           textAlign: item.style.textAlign || "left",
         };

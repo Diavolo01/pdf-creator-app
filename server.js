@@ -11,7 +11,7 @@ const { Readable } = require('stream');
 dotenv.config();
 const app = express();
 app.use(cors());
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 80;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true })); // Ensure form data is parsed
@@ -112,7 +112,7 @@ app.post("/save-config", upload.single("jsonFile"), (req, res) => {
   });
 });
 
-app.post("/api", async (req, res) => {
+app.all("/api", async (req, res) => {
   const getData = req.body;
   const pdfFiles = [];
   const jsonFiles = [];
@@ -243,7 +243,7 @@ async function mergePDFs(uuid, pdfDataList) {
 
             page.drawImage(embeddedImage, {
               x: Math.min(element.x, width - 10),
-              y: Math.max(Math.min(element.y, height - 10), 10),
+              y: element.y,
               width: Number(element.width),
               height: Number(element.height),
             });
@@ -258,7 +258,7 @@ async function mergePDFs(uuid, pdfDataList) {
           const fontSize = parseFloat(
             element.fontSize.toString().replace("px", "")
           ); //(element.fontSize || "12")
-          const adjustY = element.y + element.height - fontSize;
+          const adjustY = element.y;
           let r = 0,
             g = 0,
             b = 0;

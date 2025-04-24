@@ -7,66 +7,57 @@
     <link rel="stylesheet" href="styles.css" />
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.1/themes/base/jquery-ui.css">
   </head>
-  <body>
-    <div class="toolbar">    
-      </select>
-      <!--<button id="addImage">Add Image</button>-->
-      <input type="text" id="imageUrlInput" placeholder="Enter image URL" />
-      <button id="startDrawImg">Add Image</button>
-      <button id="startDraw">Add Text</button>
-      <button id="createHr">Create HR</button>
-      <button id="addTemplate">Import Template</button>
-      <button id="exportConfig">Export Config</button>
-      <button id="importConfig">Import Config</button>
-      <input type="file" id="importFile" style="display: none" />
-      <button id="previewPdf">Preview PDF</button>
-      <button id="copyItem" class="btn btn-secondary">Copy</button>
-<button id="pasteItem" class="btn btn-secondary">Paste</button>
+  <body class="bg-orange-200 text-gray-800 font-sans">
+  </body>
+    <div class="toolbar flex flex-wrap gap-2 p-4 bg-white shadow-md border-b border-gray-200">
+      <!-- <input type="text" id="imageUrlInput" placeholder="Enter image URL"class="border px-2 py-1 rounded w-48" /> -->
+      <button id="startDrawImg" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add Image</button>
+      <button id="startDraw" class="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">Add Text</button>
+      <button id="createHr" class="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600">Create HR</button>
+      <button id="addTemplate" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Import Template</button>
+      <button id="exportConfig" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-900">Export</button>
+      <button id="importConfig" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Import</button>
+      <input type="file" id="importFile" class="hidden" placeholder="somth"/>
+      <button id="previewPdf" class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600">Preview PDF</button>
+      <!-- <button id="copyItem" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">Copy</button>
+      <button id="pasteItem" class="bg-indigo-400 text-white px-4 py-2 rounded hover:bg-indigo-500">Paste</button> -->
     </div>
-    <div id="pdfControls" style="display: none;">
-      <button id="prevPage">Previous Page</button>
-      <span id="pageInfo">Page 1 of 1</span>
-      <button id="nextPage">Next Page</button>
+  
+    <div id="pdfControls" class="text-center mt-4 hidden">
+      <button id="prevPage" class="bg-gray-400 text-white px-4 py-2 rounded">Previous</button>
+      <span id="pageInfo" class="px-4">Page 1 of 1</span>
+      <button id="nextPage" class="bg-gray-400 text-white px-4 py-2 rounded">Next</button>
+    </div>
+  <br>
+    <div  id="canvasContainer">
+      <div class="bg-white" id="canvas"></div>
+    </div>
+  
+    <div id="textboxProperties" class="bg-white shadow-md rounded p-4 mx-4 my-6">
+      <h3 class="text-xl font-semibold mb-4">Textbox Properties</h3>
+      <p>Textbox Index: <span id="textboxId" class="font-bold">None</span></p>
+      <div class="grid grid-cols-2 gap-4 mt-2">
+        <label>Parameter Name: <input id="parameterName" type="text" class="border p-1 rounded w-full"></label>
+        <label>Font Size: <input id="fontSize" type="number" value="16" class="border p-1 rounded w-full"></label>
+        <label>Content: <input id="textContent" type="text" class="border p-1 rounded w-full"></label>
+        <label>Position X: <input id="posX" type="number" class="border p-1 rounded w-full"></label>
+        <label>Position Y: <input id="posY" type="number" class="border p-1 rounded w-full"></label>
+        <label>Font Family:
+          <select id="fontSelect" class="border p-1 rounded w-full">
+            <!-- <option value=""></option> -->
+          </select>
+        </label>
+      </div>
       <br>
-      <br>
-    </div>
-    <div id="canvasContainer">
-      <div id="canvas" ></div>
-    </div>
-
-    <div id="textboxProperties">
-      <h3>Textbox Properties</h3>
-      <p>Textbox Index: <span id="textboxId">None</span></p>
-      <label>Parameter Name: <input id="parameterName" type="text">
-      <br><br>
-      <label>Font Size: <input id="fontSize" type="number" value="16"></label>
-      <br><br>
-      <label>Content: <input id="textContent" type="text"></label>
-      <br><br>
-      <label>Position X: <input id="posX" type="number"></label>
-      <br><br>
-      <label>Position Y: <input id="posY" type="number"></label>
-      <br><br>
-      <label>Font Family:
-        <select id="fontSelect">
-          <option value="" disabled selected>Select Font</option>
-        </select>
+      <label>Font Color:
+        <input type="color" id="html5colorpicker" value="#ff0000" class="w-full h-10 rounded">
       </label>
-      <br>
-      <br>
-        <label>font color:
-        <input type="color" id="html5colorpicker" value="#ff0000" style="width:60%;">
-      </label>
-      <br><br>
-      <h3>Image Properties</h3>
-      <p>Image Index: <span id="imgContainerId">None</span></p>
-        <label>Parameter Image: <input id="parameterImage" type="text">
-          <br><br>
-        <label>Image Src: <input id="ImgSrc" type="text"></label>
-        <button id="updateLastImage">Update Last Image</button>
-        <script>
-      </script>
-  </div>
+  
+      <h3 class="text-xl font-semibold mt-6 mb-4">Image Properties</h3>
+      <label>Parameter Image: <input id="parameterImage" type="text" class="border p-1 rounded w-full mt-2"></label>
+      <label>Image Src: <input id="ImgSrc" type="text" class="border p-1 rounded w-full mt-2"></label>
+      <button id="updateLastImage" class="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Update Last Image</button>
+    </div>
       
 <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
   <script src="https://code.jquery.com/ui/1.14.1/jquery-ui.js"></script>
@@ -75,8 +66,7 @@
     <script src="js/jspdf.umd.min.js"></script>
     <script src="js/pdf-lib.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/pdfjs-lib@0.0.149/build/pdf.min.js"></script>
-    <script src="
-https://cdn.jsdelivr.net/npm/axios@1.8.4/dist/axios.min.js
-"></script>
-  </body>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.8.4/dist/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
 </html>
