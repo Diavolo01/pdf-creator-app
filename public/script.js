@@ -4,9 +4,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const canvas = document.getElementById("canvas");
   const addImageUrlButton = document.getElementById("startDrawImg");
   const exportConfigButton = document.getElementById("exportConfig");
-  const importConfigButton = document.getElementById("importConfig");
-  const importFileInput = document.getElementById("importFile");
-  const previewPdfButton = document.getElementById("previewPdf");
+  // const importConfigButton = document.getElementById("importConfig");
+  // const importFileInput = document.getElementById("importFile");
+  // const previewPdfButton = document.getElementById("previewPdf");
   const addTemplateButton = document.getElementById("addTemplate");
   const startDrawButton = document.getElementById("startDraw");
   const prevPageButton = document.getElementById("prevPage");
@@ -34,9 +34,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   addImageUrlButton.addEventListener("click", startDrawImg);
   exportConfigButton.addEventListener("click", exportConfig);
-  importConfigButton.addEventListener("click", () => importFileInput.click());
-  importFileInput.addEventListener("change", importConfig);
-  previewPdfButton.addEventListener("click", previewPdf);
+  // importConfigButton.addEventListener("click", () => importFileInput.click());
+  // importFileInput.addEventListener("change", importConfig);
+  // previewPdfButton.addEventListener("click", previewPdf);
   addTemplateButton.addEventListener("click", addTemplate);
   startDrawButton.addEventListener("click", startDrawing);
   canvas.addEventListener("click", handleCanvasClick);
@@ -370,7 +370,8 @@ document.addEventListener("DOMContentLoaded", () => {
         templateImg.style.position = "absolute";
         templateImg.style.top = "0";
         templateImg.style.left = "0";
-        templateImg.style.zIndex = "-1";
+        // templateImg.style.zIndex = "-1";
+        templateImg.style.pointerEvents = "none";
         canvas.appendChild(templateImg);
       }
 
@@ -1325,6 +1326,7 @@ console.log(jsonBlob.type);
   console.log(canvasWidth, canvasHeight)
 const result = await response.json();
 console.log("Server response:", result);
+    window.location.href = '/edit/'+uuid;
   }
   async function importJSON() {
    
@@ -1429,7 +1431,7 @@ console.log("Server response:", result);
         templateImg.style.position = "absolute";
         templateImg.style.top = "0";
         templateImg.style.left = "0";
-        templateImg.style.zIndex = "-1";
+        templateImg.style.pointerEvents = "none";
         templateImg.src = config.templateSrc;
         canvas.appendChild(templateImg);
         canvas.appendChild(selectionBox);
