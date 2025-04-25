@@ -280,7 +280,6 @@ async function mergePDFs(uuid, pdfDataList) {
           } else {
             console.warn("Unsupported color format, fallback to black:", color);
           }
-
           page.drawText(element.text, {
             x: element.x,
             y: adjustY,
