@@ -67,12 +67,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
   
-  fetch("/getFonts").then(r => r.json()).then(fonts => {
-    fonts.forEach(f => {
-      // Add to select
+  fetch("/getFonts")
+  .then(r => r.json())
+  .then(fonts => {
+    // Sort fonts so that 'Sarabun-Bold' comes first
+    const sortedFonts = ['Sarabun-Bold', ...fonts.filter(f => f !== 'Sarabun-Bold')];
+
+    // Add the fonts to the dropdown
+    sortedFonts.forEach(f => {
       fontSelect.innerHTML += `<option value="${f}">${f}</option>`;
-  
-      // Register @font-face
+    });
+
+    // Register @font-face for each font
+    sortedFonts.forEach(f => {
       const fontFace = new FontFace(f, `url(/fonts/${f}.ttf)`);
       fontFace.load().then(loadedFace => {
         document.fonts.add(loadedFace);
@@ -80,6 +87,9 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error("Font loading failed: ", err);
       });
     });
+
+    // Set 'Sarabun-Bold' as the first selected font
+    fontSelect.value = 'Sarabun-Bold';
   });
   
   const selectionBox = document.createElement("div");
