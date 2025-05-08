@@ -293,7 +293,7 @@ async function mergePDFs(uuid, pdfDataList) {
             start: { x: element.x, y: element.y },
             end: { x: element.x + element.width, y: element.y },
             thickness: 2,
-            color: color,
+            color: rgb(r, g, b),
           });
         }
       }
