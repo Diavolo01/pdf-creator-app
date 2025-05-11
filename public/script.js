@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const exportConfigButton = document.getElementById("exportConfig");
   // const importConfigButton = document.getElementById("importConfig");
   // const importFileInput = document.getElementById("importFile");
-  // const previewPdfButton = document.getElementById("previewPdf");
+  const previewPdfButton = document.getElementById("previewPdf");
   const addTemplateButton = document.getElementById("addTemplate");
   const startDrawButton = document.getElementById("startDraw");
   const prevPageButton = document.getElementById("prevPage");
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
   exportConfigButton.addEventListener("click", exportConfig);
   // importConfigButton.addEventListener("click", () => importFileInput.click());
   // importFileInput.addEventListener("change", importConfig);
-  // previewPdfButton.addEventListener("click", previewPdf);
+  previewPdfButton.addEventListener("click", previewPdf);
   addTemplateButton.addEventListener("click", addTemplate);
   startDrawButton.addEventListener("click", startDrawing);
   canvas.addEventListener("click", handleCanvasClick);
